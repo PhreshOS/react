@@ -90,6 +90,7 @@ for (const name of [
   "useProgram",
   "useProgramState",
   "useScale",
+  "useServiceState",
   "useSubscribe",
   "useSurfaceSize",
   "useWindowState"
@@ -108,7 +109,7 @@ assert.equal(typeof messages[0][2], "string")
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { current } from "@phreshos/client"
+    `import { current, host } from "@phreshos/client"
 import {
   CurrentProvider,
   HostProvider,
@@ -117,6 +118,7 @@ import {
   useProcess,
   useProcessState,
   useScale,
+  useServiceState,
   useSurfaceSize
 } from "@phreshos/react"
 
@@ -125,9 +127,10 @@ function Content() {
   const surface = useSurfaceSize()
   const process = useProcess()
   const state = useProcessState(process)
+  const service = useServiceState(host.service({ program: "counter", endpoint: "server", name: "state" }))
   const spacing = useScale(theme.spacing)
   const accent = useColor(theme.accent)
-  return <span style={{ color: accent.base, padding: spacing.small }}>{surface.width + Number(state?.clientExists)}</span>
+  return <span style={{ color: accent.base, padding: spacing.small }}>{surface.width + Number(state?.clientExists) + Number(service?.disabled)}</span>
 }
 
 const tree = (

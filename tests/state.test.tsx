@@ -1,9 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Process, Program, Window } from "@phreshos/client"
+import type { Cleanup, Process, Program, ServiceHandler, Window } from "@phreshos/client"
 import useProcessState from "../source/use-process-state.js"
 import useProgramState from "../source/use-program-state.js"
+import useServiceState from "../source/use-service-state.js"
 import useWindowState from "../source/use-window-state.js"
 
 describe("explicit domain state hooks", function () {
@@ -95,6 +96,38 @@ describe("explicit domain state hooks", function () {
 
     expect(hook.result.current?.position).toEqual({ x: 30, y: 40 })
     expect(hook.result.current?.title).toBe("Changed")
+  })
+
+  it("subscribes before the service snapshot and preserves intervening lifecycle events", async function () {
+    const events = new Subject()
+    const snapshot = deferred<boolean>()
+    const order: string[] = []
+    const service = {
+      disabled: () => {
+        order.push("read")
+        return snapshot.promise
+      },
+      subscribe: (event: string, listener: Listener) => {
+        order.push(`subscribe:${event}`)
+        return events.subscribe(event, listener)
+      }
+    } as unknown as ServiceHandler
+
+    const hook = renderHook(() => useServiceState(service))
+
+    expect(hook.result.current).toBeUndefined()
+    expect(order).toEqual(["subscribe:enable", "subscribe:disable", "read"])
+
+    act(() => events.emit("enable", undefined))
+    snapshot.resolve(true)
+
+    await waitFor(() => expect(hook.result.current).toEqual({ disabled: false }))
+
+    act(() => events.emit("disable", undefined))
+    expect(hook.result.current).toEqual({ disabled: true })
+
+    hook.unmount()
+    expect(events.listenerCount).toBe(0)
   })
 
   it("throws the original initial-read rejection during render", async function () {

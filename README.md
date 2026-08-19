@@ -24,9 +24,10 @@ It provides two kinds of adapter:
   `usePointerPosition()` expose those values synchronously after resolution.
 - `useSubscribe()` and `useObserve()` own persistent ordinary-event
   registrations for one mounted React consumer.
-- `useProgramState(program)`, `useProcessState(process)`, and
-  `useWindowState(window)` explicitly compose existing reads with future live
-  events for one mounted consumer. They add no state operation to another SDK.
+- `useProgramState(program)`, `useProcessState(process)`,
+  `useServiceState(service)`, and `useWindowState(window)` explicitly compose
+  existing reads with future live events for one mounted consumer. They add no
+  state operation to another SDK.
 - `useObserveAsks()` adapts an Endpoint traffic surface's question observation,
   while `useObserveAnswers()` adapts a Server traffic surface's answer
   observation.
@@ -47,6 +48,9 @@ useProgramState(program)
 
 useProcessState(process)
 // { exited, serverExists, clientExists } | undefined
+
+useServiceState(service)
+// { disabled } | undefined
 
 useWindowState(window)
 // WindowState | undefined
