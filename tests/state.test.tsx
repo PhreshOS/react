@@ -87,17 +87,14 @@ describe("explicit domain state hooks", function () {
       minimized: false,
       front: true,
       layer: "window",
-      location: "./",
-      surface: null
+      location: "./"
     }))
 
     act(() => events.emit("move", { x: 30, y: 40 }))
     act(() => events.emit("changeTitle", "Changed"))
-    act(() => events.emit("surface", { opacity: 0.6 }))
 
     expect(hook.result.current?.position).toEqual({ x: 30, y: 40 })
     expect(hook.result.current?.title).toBe("Changed")
-    expect(hook.result.current?.surface).toEqual({ opacity: 0.6 })
   })
 
   it("throws the original initial-read rejection during render", async function () {
@@ -157,10 +154,8 @@ function windowFixture(events: Subject): Window {
     layer: async () => "window",
     location: async () => "./",
     surface: {
-      snapshot: async () => null,
       set: async () => undefined,
-      remove: async () => undefined,
-      subscribe: (event: string, listener: Listener) => events.subscribe(event === "change" ? "surface" : event, listener)
+      remove: async () => undefined
     },
     subscribe: events.subscribe
   } as unknown as Window

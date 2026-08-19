@@ -52,6 +52,10 @@ useWindowState(window)
 // WindowState | undefined
 ```
 
+`WindowState` contains the observable Window properties only. The command-only
+`window.surface` capability is intentionally absent: Program code may replace
+or remove its target but cannot read or subscribe to it.
+
 `undefined` means only that the initial explicit reads are pending. Each hook
 opens its live subscriptions before those reads, then applies any intervening
 events so an older result cannot overwrite newer state. If an initial read
