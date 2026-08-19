@@ -11,7 +11,7 @@ export {
 export {
   default as HostProvider,
   usePointerPosition,
-  useSurfaceSize,
+  useDesktopSize,
   useHostTheme,
   type HostProvision,
   type HostProvisionName,

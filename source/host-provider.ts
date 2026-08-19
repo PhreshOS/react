@@ -11,12 +11,12 @@ import {
 import {
   host,
   type PointerPosition,
-  type Surface,
+  type Size,
   type ThemeProperties
 } from "@phreshos/client"
 import LiveSnapshot from "./live-snapshot.js"
 
-const provisionNames = ["theme", "surfaceSize", "pointerPosition"] as const
+const provisionNames = ["theme", "desktopSize", "pointerPosition"] as const
 const HostContext = createContext<HostContextValue | null>(null)
 
 /** Requests and follows only the host values explicitly selected by the program. */
@@ -60,9 +60,9 @@ export function useHostTheme(): Readonly<ThemeProperties> {
   return useProvided("theme")
 }
 
-/** Returns the selected Surface size and follows future resize events. */
-export function useSurfaceSize(): Surface {
-  return useProvided("surfaceSize")
+/** Returns the selected desktop size and follows future resize events. */
+export function useDesktopSize(): Size {
+  return useProvided("desktopSize")
 }
 
 /** Returns the selected Pointer position and follows future move events. */
@@ -91,10 +91,10 @@ function createStores(selection: readonly HostProvisionName[]): HostStores {
           subscriber => host.theme.subscribe("change", subscriber)
         )
         break
-      case "surfaceSize":
-        stores.surfaceSize = new LiveSnapshot(
-          () => host.surface.size(),
-          subscriber => host.surface.subscribe("resize", subscriber)
+      case "desktopSize":
+        stores.desktopSize = new LiveSnapshot(
+          () => host.desktop.size(),
+          subscriber => host.desktop.subscribe("resize", subscriber)
         )
         break
       case "pointerPosition":
@@ -125,7 +125,7 @@ function normalizeProvision(provide: HostProvision): readonly HostProvisionName[
 
 const hookNames: Readonly<Record<HostProvisionName, string>> = {
   theme: "useHostTheme",
-  surfaceSize: "useSurfaceSize",
+  desktopSize: "useDesktopSize",
   pointerPosition: "usePointerPosition"
 }
 
@@ -149,7 +149,7 @@ export interface HostProviderProperties {
 
 type HostValues = Readonly<{
   theme: Readonly<ThemeProperties>
-  surfaceSize: Surface
+  desktopSize: Size
   pointerPosition: PointerPosition | null
 }>
 

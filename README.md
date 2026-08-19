@@ -20,7 +20,7 @@ It provides two kinds of adapter:
   `provide` prop, then exposes them synchronously through `useProgram()`,
   `useProcess()`, and `useParent()`.
 - `HostProvider` subscribes before reading exactly the host values named by its
-  required `provide` prop. `useHostTheme()`, `useSurfaceSize()`, and
+  required `provide` prop. `useHostTheme()`, `useDesktopSize()`, and
   `usePointerPosition()` expose those values synchronously after resolution.
 - `useSubscribe()` and `useObserve()` own persistent ordinary-event
   registrations for one mounted React consumer.
@@ -90,7 +90,7 @@ The ordinary-event and traffic hooks retain the latest value returned by their p
 import { host } from "@phreshos/client"
 import { useSubscribe } from "@phreshos/react"
 
-const surface = useSubscribe(host.surface, "resize")
+const desktop = useSubscribe(host.desktop, "resize")
 ```
 
 Host reads are asynchronous while subscriptions are live-only. `HostProvider`
@@ -98,17 +98,17 @@ subscribes before requesting each selected snapshot and prevents an older read
 from overwriting a newer event:
 
 ```tsx
-import { HostProvider, useHostTheme, useSurfaceSize } from "@phreshos/react"
+import { HostProvider, useDesktopSize, useHostTheme } from "@phreshos/react"
 
 function Content() {
   const theme = useHostTheme()
-  const surface = useSurfaceSize()
+  const desktop = useDesktopSize()
 
-  return <p style={{ color: theme.foreground }}>{surface.width} × {surface.height}</p>
+  return <p style={{ color: theme.foreground }}>{desktop.width} × {desktop.height}</p>
 }
 
 function App() {
-  return <HostProvider provide={["theme", "surfaceSize"]} fallback={<p>Loading…</p>}>
+  return <HostProvider provide={["theme", "desktopSize"]} fallback={<p>Loading…</p>}>
     <Content />
   </HostProvider>
 }

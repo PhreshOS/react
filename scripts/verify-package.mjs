@@ -79,6 +79,7 @@ for (const name of [
   "CurrentProvider",
   "HostProvider",
   "useColor",
+  "useDesktopSize",
   "useHostTheme",
   "useObserve",
   "useObserveAnswers",
@@ -92,7 +93,6 @@ for (const name of [
   "useScale",
   "useServiceState",
   "useSubscribe",
-  "useSurfaceSize",
   "useWindowState"
 ]) assert.equal(typeof sdk[name], "function", name)
 
@@ -119,23 +119,23 @@ import {
   useProcessState,
   useScale,
   useServiceState,
-  useSurfaceSize
+  useDesktopSize
 } from "@phreshos/react"
 
 function Content() {
   const theme = useHostTheme()
-  const surface = useSurfaceSize()
+  const desktop = useDesktopSize()
   const process = useProcess()
   const state = useProcessState(process)
   const service = useServiceState(host.service({ program: "counter", endpoint: "server", name: "state" }))
   const spacing = useScale(theme.spacing)
   const accent = useColor(theme.accent)
-  return <span style={{ color: accent.base, padding: spacing.small }}>{surface.width + Number(state?.clientExists) + Number(service?.disabled)}</span>
+  return <span style={{ color: accent.base, padding: spacing.small }}>{desktop.width + Number(state?.clientExists) + Number(service?.disabled)}</span>
 }
 
 const tree = (
   <CurrentProvider provide={["process"]} fallback={null}>
-    <HostProvider provide={["theme", "surfaceSize"]} fallback={null}>
+    <HostProvider provide={["theme", "desktopSize"]} fallback={null}>
       <Content />
     </HostProvider>
   </CurrentProvider>
