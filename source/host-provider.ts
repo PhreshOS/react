@@ -10,8 +10,8 @@ import {
 } from "react"
 import {
   host,
+  type DesktopSize,
   type PointerPosition,
-  type Size,
   type ThemeProperties
 } from "@phreshos/client"
 import LiveSnapshot from "./live-snapshot.js"
@@ -61,7 +61,7 @@ export function useHostTheme(): Readonly<ThemeProperties> {
 }
 
 /** Returns the selected desktop size and follows future resize events. */
-export function useDesktopSize(): Size {
+export function useDesktopSize(): DesktopSize {
   return useProvided("desktopSize")
 }
 
@@ -149,7 +149,7 @@ export interface HostProviderProperties {
 
 type HostValues = Readonly<{
   theme: Readonly<ThemeProperties>
-  desktopSize: Size
+  desktopSize: DesktopSize
   pointerPosition: PointerPosition | null
 }>
 
