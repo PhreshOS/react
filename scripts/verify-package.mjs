@@ -97,9 +97,8 @@ for (const name of [
 ]) assert.equal(typeof sdk[name], "function", name)
 
 assert.equal(messages.length, 1)
-assert.equal(messages[0][0], "boundary")
-assert.equal(messages[0][1], "document")
-assert.equal(typeof messages[0][2], "string")
+assert(Array.isArray(messages[0]), "the Client did not send a transport packet")
+assert(messages[0][0] instanceof Uint8Array, "the Client transport packet is not binary")
 `
   )
   execFileSync(process.execPath, [join(consumer, "runtime.mjs")], {
