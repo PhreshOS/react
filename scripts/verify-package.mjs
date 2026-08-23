@@ -126,7 +126,7 @@ function Content() {
   const desktop = useDesktopSize()
   const process = useProcess()
   const state = useProcessState(process)
-  const service = useServiceState(host.service.prepare({ program: "counter", endpoint: "server", name: "state" }))
+  const service = useServiceState(host.service({ program: "counter", endpoint: "server", name: "state" }))
   const spacing = useScale(theme.spacing)
   const accent = useColor(theme.accent)
   return <span style={{ color: accent.base, padding: spacing.small }}>{desktop.width + Number(state?.clientExists) + Number(service?.enabled)}</span>
