@@ -50,7 +50,7 @@ useProcessState(process)
 // { exited, serverExists, clientExists } | undefined
 
 useServiceState(service)
-// { disabled } | undefined
+// { enabled } | undefined
 
 useWindowState(window)
 // WindowState | undefined

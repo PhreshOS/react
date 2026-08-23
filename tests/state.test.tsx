@@ -10,14 +10,21 @@ import useWindowState from "../source/use-window-state.js"
 describe("explicit domain state hooks", function () {
   it("subscribes before the Program read and preserves intervening lifecycle events", async function () {
     const events = new Subject()
+    const processEvents = new Subject()
     const processes = deferred<Process[]>()
     const created = {} as Process
     const order: string[] = []
     const program = {
       installed: async () => true,
-      processes: () => {
-        order.push("read")
-        return processes.promise
+      process: {
+        list: () => {
+          order.push("read")
+          return processes.promise
+        },
+        subscribe: (event: string, listener: Listener) => {
+          order.push(`subscribe:process:${event}`)
+          return processEvents.subscribe(event, listener)
+        }
       },
       subscribe: (event: string, listener: Listener) => {
         order.push(`subscribe:${event}`)
@@ -29,13 +36,13 @@ describe("explicit domain state hooks", function () {
 
     expect(hook.result.current).toBeUndefined()
     expect(order.slice(0, 3)).toEqual([
-      "subscribe:processCreate",
-      "subscribe:processExit",
+      "subscribe:process:create",
+      "subscribe:process:exit",
       "subscribe:uninstall"
     ])
     expect(order[3]).toBe("read")
 
-    act(() => events.emit("processCreate", created))
+    act(() => processEvents.emit("create", created))
     processes.resolve([])
 
     await waitFor(() => expect(hook.result.current).toEqual({ installed: true, processes: [created] }))
@@ -45,6 +52,7 @@ describe("explicit domain state hooks", function () {
 
     hook.unmount()
     expect(events.listenerCount).toBe(0)
+    expect(processEvents.listenerCount).toBe(0)
   })
 
   it("maintains Process endpoint presence from lifecycle events", async function () {
@@ -103,7 +111,7 @@ describe("explicit domain state hooks", function () {
     const snapshot = deferred<boolean>()
     const order: string[] = []
     const service = {
-      disabled: () => {
+      enabled: () => {
         order.push("read")
         return snapshot.promise
       },
@@ -121,10 +129,10 @@ describe("explicit domain state hooks", function () {
     act(() => events.emit("enable", undefined))
     snapshot.resolve(true)
 
-    await waitFor(() => expect(hook.result.current).toEqual({ disabled: false }))
+    await waitFor(() => expect(hook.result.current).toEqual({ enabled: true }))
 
     act(() => events.emit("disable", undefined))
-    expect(hook.result.current).toEqual({ disabled: true })
+    expect(hook.result.current).toEqual({ enabled: false })
 
     hook.unmount()
     expect(events.listenerCount).toBe(0)
