@@ -20,7 +20,7 @@ It provides two kinds of adapter:
   `provide` prop, then exposes them synchronously through `useProgram()`,
   `useProcess()`, and `useParent()`.
 - `SystemProvider` subscribes before reading exactly the system values named by its
-  required `provide` prop. `useSystemTheme()`, `useDesktopSize()`, and
+  required `provide` prop. `useSystemAppearance()`, `useSystemTheme()`, `useDesktopSize()`, and
   `usePointerPosition()` expose those values synchronously after resolution.
 - `useSubscribe()` and `useObserve()` own persistent ordinary-event
   registrations for one mounted React consumer.
@@ -88,17 +88,18 @@ subscribes before requesting each selected snapshot and prevents an older read
 from overwriting a newer event:
 
 ```tsx
-import { SystemProvider, useDesktopSize, useSystemTheme } from "@phreshos/react"
+import { SystemProvider, useDesktopSize, useSystemAppearance, useSystemTheme } from "@phreshos/react"
 
 function Content() {
   const theme = useSystemTheme()
+  const appearance = useSystemAppearance()
   const desktop = useDesktopSize()
 
-  return <p style={{ color: theme.foreground }}>{desktop.width} × {desktop.height}</p>
+  return <p style={{ color: appearance.foreground[theme] }}>{desktop.width} × {desktop.height}</p>
 }
 
 function App() {
-  return <SystemProvider provide={["theme", "desktopSize"]} fallback={<p>Loading…</p>}>
+  return <SystemProvider provide={["appearance", "theme", "desktopSize"]} fallback={<p>Loading…</p>}>
     <Content />
   </SystemProvider>
 }

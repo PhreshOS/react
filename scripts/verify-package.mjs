@@ -79,6 +79,7 @@ for (const name of [
   "CurrentProvider",
   "SystemProvider",
   "useDesktopSize",
+  "useSystemAppearance",
   "useSystemTheme",
   "useObserve",
   "useObserveAnswers",
@@ -108,6 +109,7 @@ assert.equal(messages.length, 0, "importing the React SDK initialized Client tra
 import {
   CurrentProvider,
   SystemProvider,
+  useSystemAppearance,
   useSystemTheme,
   useProcess,
   useProcessState,
@@ -117,16 +119,17 @@ import {
 
 function Content() {
   const theme = useSystemTheme()
+  const appearance = useSystemAppearance()
   const desktop = useDesktopSize()
   const process = useProcess()
   const state = useProcessState(process)
   const service = useServiceState(system.service({ program: "counter", endpoint: "server", name: "state" }))
-  return <span style={{ color: theme.accent, padding: theme.spacing }}>{desktop.width + Number(state?.clientExists) + Number(service?.enabled)}</span>
+  return <span style={{ color: appearance.foreground[theme], padding: appearance.spacing.light }}>{desktop.width + Number(state?.clientExists) + Number(service?.enabled)}</span>
 }
 
 const tree = (
   <CurrentProvider provide={["process"]} fallback={null}>
-    <SystemProvider provide={["theme", "desktopSize"]} fallback={null}>
+    <SystemProvider provide={["appearance", "theme", "desktopSize"]} fallback={null}>
       <Content />
     </SystemProvider>
   </CurrentProvider>

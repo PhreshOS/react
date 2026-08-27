@@ -12,6 +12,7 @@ export {
   default as SystemProvider,
   usePointerPosition,
   useDesktopSize,
+  useSystemAppearance,
   useSystemTheme,
   type SystemProvision,
   type SystemProvisionName,

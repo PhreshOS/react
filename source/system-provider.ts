@@ -10,13 +10,14 @@ import {
 } from "react"
 import {
   system,
+  type Appearance,
   type DesktopSize,
   type PointerPosition,
-  type ThemeProperties
+  type Theme
 } from "@phreshos/client"
 import LiveSnapshot from "./live-snapshot.js"
 
-const provisionNames = ["theme", "desktopSize", "pointerPosition"] as const
+const provisionNames = ["appearance", "theme", "desktopSize", "pointerPosition"] as const
 const SystemContext = createContext<SystemContextValue | null>(null)
 
 /** Requests and follows only the system values explicitly selected by the program. */
@@ -55,8 +56,13 @@ function SelectedSystemProvider({ children, fallback, selection }: SelectedSyste
   return createElement(SystemContext.Provider, { value: { provided: new Set(selection), stores } }, children)
 }
 
-/** Returns the selected Theme snapshot and follows future change events. */
-export function useSystemTheme(): Readonly<ThemeProperties> {
+/** Returns the complete unresolved Appearance and follows authoritative updates. */
+export function useSystemAppearance(): Appearance {
+  return useProvided("appearance")
+}
+
+/** Returns the effective local Desktop Theme and follows future changes. */
+export function useSystemTheme(): Theme {
   return useProvided("theme")
 }
 
@@ -85,6 +91,12 @@ function createStores(selection: readonly SystemProvisionName[]): SystemStores {
 
   for (const name of selection) {
     switch (name) {
+      case "appearance":
+        stores.appearance = new LiveSnapshot(
+          () => system.appearance.snapshot(),
+          subscriber => system.appearance.subscribe("change", subscriber)
+        )
+        break
       case "theme":
         stores.theme = new LiveSnapshot(
           () => system.theme.snapshot(),
@@ -124,6 +136,7 @@ function normalizeProvision(provide: SystemProvision): readonly SystemProvisionN
 }
 
 const hookNames: Readonly<Record<SystemProvisionName, string>> = {
+  appearance: "useSystemAppearance",
   theme: "useSystemTheme",
   desktopSize: "useDesktopSize",
   pointerPosition: "usePointerPosition"
@@ -148,7 +161,8 @@ export interface SystemProviderProperties {
 }
 
 type SystemValues = Readonly<{
-  theme: Readonly<ThemeProperties>
+  appearance: Appearance
+  theme: Theme
   desktopSize: DesktopSize
   pointerPosition: PointerPosition | null
 }>
