@@ -31,9 +31,6 @@ It provides two kinds of adapter:
 - `useObserveAsks()` adapts an Endpoint traffic surface's question observation,
   while `useObserveAnswers()` adapts a Server traffic surface's answer
   observation.
-- `useScale(value)` and `useColor(value)` memoize the complete derived scale
-  around the explicit number or CSS color supplied by the component. They do
-  not read a Theme or choose a source value implicitly.
 
 Window needs no React resolution: `current.window` is already a synchronous,
 silent capability object. `CurrentProvider` therefore has no `window` selection
@@ -74,13 +71,6 @@ not. A component that spans Client lifecycle should use `useProcessState()` to
 mount its `useWindowState()` child only while `clientExists` is true. Calling
 the Window hook while the Client is absent lets the existing Window reads
 reject normally.
-
-```tsx
-const theme = useHostTheme()
-const spacing = useScale(theme.spacing)
-const radius = useScale(theme.radius)
-const accent = useColor(theme.accent)
-```
 
 The ordinary-event and traffic hooks retain the latest value returned by their projector.
 `useSubscribe()` may omit that callback; its default projector is

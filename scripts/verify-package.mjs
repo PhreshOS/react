@@ -78,7 +78,6 @@ const sdk = await import("@phreshos/react")
 for (const name of [
   "CurrentProvider",
   "HostProvider",
-  "useColor",
   "useDesktopSize",
   "useHostTheme",
   "useObserve",
@@ -90,15 +89,12 @@ for (const name of [
   "useProcessState",
   "useProgram",
   "useProgramState",
-  "useScale",
   "useServiceState",
   "useSubscribe",
   "useWindowState"
 ]) assert.equal(typeof sdk[name], "function", name)
 
-assert.equal(messages.length, 1)
-assert(Array.isArray(messages[0]), "the Client did not send a transport packet")
-assert(messages[0][0] instanceof Uint8Array, "the Client transport packet is not binary")
+assert.equal(messages.length, 0, "importing the React SDK initialized Client transport eagerly")
 `
   )
   execFileSync(process.execPath, [join(consumer, "runtime.mjs")], {
@@ -112,11 +108,9 @@ assert(messages[0][0] instanceof Uint8Array, "the Client transport packet is not
 import {
   CurrentProvider,
   HostProvider,
-  useColor,
   useHostTheme,
   useProcess,
   useProcessState,
-  useScale,
   useServiceState,
   useDesktopSize
 } from "@phreshos/react"
@@ -127,9 +121,7 @@ function Content() {
   const process = useProcess()
   const state = useProcessState(process)
   const service = useServiceState(host.service({ program: "counter", endpoint: "server", name: "state" }))
-  const spacing = useScale(theme.spacing)
-  const accent = useColor(theme.accent)
-  return <span style={{ color: accent.base, padding: spacing.small }}>{desktop.width + Number(state?.clientExists) + Number(service?.enabled)}</span>
+  return <span style={{ color: theme.accent, padding: theme.spacing }}>{desktop.width + Number(state?.clientExists) + Number(service?.enabled)}</span>
 }
 
 const tree = (
