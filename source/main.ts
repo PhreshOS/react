@@ -9,14 +9,14 @@ export {
 } from "./current-provider.js"
 
 export {
-  default as HostProvider,
+  default as SystemProvider,
   usePointerPosition,
   useDesktopSize,
-  useHostTheme,
-  type HostProvision,
-  type HostProvisionName,
-  type HostProviderProperties
-} from "./host-provider.js"
+  useSystemTheme,
+  type SystemProvision,
+  type SystemProvisionName,
+  type SystemProviderProperties
+} from "./system-provider.js"
 
 export { default as useSubscribe } from "./use-subscribe.js"
 export { default as useObserve } from "./use-observe.js"

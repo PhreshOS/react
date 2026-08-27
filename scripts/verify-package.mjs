@@ -77,9 +77,9 @@ const sdk = await import("@phreshos/react")
 
 for (const name of [
   "CurrentProvider",
-  "HostProvider",
+  "SystemProvider",
   "useDesktopSize",
-  "useHostTheme",
+  "useSystemTheme",
   "useObserve",
   "useObserveAnswers",
   "useObserveAsks",
@@ -104,11 +104,11 @@ assert.equal(messages.length, 0, "importing the React SDK initialized Client tra
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { current, host } from "@phreshos/client"
+    `import { current, system } from "@phreshos/client"
 import {
   CurrentProvider,
-  HostProvider,
-  useHostTheme,
+  SystemProvider,
+  useSystemTheme,
   useProcess,
   useProcessState,
   useServiceState,
@@ -116,19 +116,19 @@ import {
 } from "@phreshos/react"
 
 function Content() {
-  const theme = useHostTheme()
+  const theme = useSystemTheme()
   const desktop = useDesktopSize()
   const process = useProcess()
   const state = useProcessState(process)
-  const service = useServiceState(host.service({ program: "counter", endpoint: "server", name: "state" }))
+  const service = useServiceState(system.service({ program: "counter", endpoint: "server", name: "state" }))
   return <span style={{ color: theme.accent, padding: theme.spacing }}>{desktop.width + Number(state?.clientExists) + Number(service?.enabled)}</span>
 }
 
 const tree = (
   <CurrentProvider provide={["process"]} fallback={null}>
-    <HostProvider provide={["theme", "desktopSize"]} fallback={null}>
+    <SystemProvider provide={["theme", "desktopSize"]} fallback={null}>
       <Content />
-    </HostProvider>
+    </SystemProvider>
   </CurrentProvider>
 )
 

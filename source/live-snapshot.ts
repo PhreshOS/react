@@ -16,7 +16,7 @@ export default class LiveSnapshot<Value> {
   ) {}
 
   public readonly snapshot = (): Value => {
-    if (this.value === unavailable) throw new Error("The requested host value is not ready")
+    if (this.value === unavailable) throw new Error("The requested system value is not ready")
     return this.value
   }
 

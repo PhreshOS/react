@@ -19,8 +19,8 @@ It provides two kinds of adapter:
 - `CurrentProvider` resolves exactly the current values named by its required
   `provide` prop, then exposes them synchronously through `useProgram()`,
   `useProcess()`, and `useParent()`.
-- `HostProvider` subscribes before reading exactly the host values named by its
-  required `provide` prop. `useHostTheme()`, `useDesktopSize()`, and
+- `SystemProvider` subscribes before reading exactly the system values named by its
+  required `provide` prop. `useSystemTheme()`, `useDesktopSize()`, and
   `usePointerPosition()` expose those values synchronously after resolution.
 - `useSubscribe()` and `useObserve()` own persistent ordinary-event
   registrations for one mounted React consumer.
@@ -77,35 +77,35 @@ The ordinary-event and traffic hooks retain the latest value returned by their p
 `message => message`, so the hook retains the latest message unchanged.
 
 ```tsx
-import { host } from "@phreshos/client"
+import { system } from "@phreshos/client"
 import { useSubscribe } from "@phreshos/react"
 
-const desktop = useSubscribe(host.desktop, "resize")
+const desktop = useSubscribe(system.desktop, "resize")
 ```
 
-Host reads are asynchronous while subscriptions are live-only. `HostProvider`
+System reads are asynchronous while subscriptions are live-only. `SystemProvider`
 subscribes before requesting each selected snapshot and prevents an older read
 from overwriting a newer event:
 
 ```tsx
-import { HostProvider, useDesktopSize, useHostTheme } from "@phreshos/react"
+import { SystemProvider, useDesktopSize, useSystemTheme } from "@phreshos/react"
 
 function Content() {
-  const theme = useHostTheme()
+  const theme = useSystemTheme()
   const desktop = useDesktopSize()
 
   return <p style={{ color: theme.foreground }}>{desktop.width} × {desktop.height}</p>
 }
 
 function App() {
-  return <HostProvider provide={["theme", "desktopSize"]} fallback={<p>Loading…</p>}>
+  return <SystemProvider provide={["theme", "desktopSize"]} fallback={<p>Loading…</p>}>
     <Content />
-  </HostProvider>
+  </SystemProvider>
 }
 ```
 
 The selection is required and non-empty. Nothing is read or subscribed merely
-because either SDK was imported, and an unselected host value never enters the
+because either SDK was imported, and an unselected system value never enters the
 Client. `pointerPosition` is permission-guarded: selecting it does not request
 permission, and resolution fails unless the Program already holds `pointer`.
 The provider renders its fallback until every selected value resolves.
@@ -137,7 +137,7 @@ export default function App() {
 }
 ```
 
-Using a current or host hook outside its provider, or without selecting its
+Using a current or system hook outside its provider, or without selecting its
 value, throws a configuration error. Neither provider supplies an implicit
 "everything" selection, so adding a future capability cannot make it enter an
 existing application.
