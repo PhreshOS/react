@@ -78,9 +78,9 @@ const sdk = await import("@phreshos/react")
 for (const name of [
   "CurrentProvider",
   "SystemProvider",
+  "useDesktopPreferences",
   "useDesktopSize",
   "useSystemAppearance",
-  "useSystemTheme",
   "useObserve",
   "useObserveAnswers",
   "useObserveAsks",
@@ -109,8 +109,8 @@ assert.equal(messages.length, 0, "importing the React SDK initialized Client tra
 import {
   CurrentProvider,
   SystemProvider,
+  useDesktopPreferences,
   useSystemAppearance,
-  useSystemTheme,
   useProcess,
   useProcessState,
   useServiceState,
@@ -118,7 +118,7 @@ import {
 } from "@phreshos/react"
 
 function Content() {
-  const theme = useSystemTheme()
+  const { theme } = useDesktopPreferences()
   const appearance = useSystemAppearance()
   const desktop = useDesktopSize()
   const process = useProcess()
@@ -129,7 +129,7 @@ function Content() {
 
 const tree = (
   <CurrentProvider provide={["process"]} fallback={null}>
-    <SystemProvider provide={["appearance", "theme", "desktopSize"]} fallback={null}>
+    <SystemProvider provide={["appearance", "desktopPreferences", "desktopSize"]} fallback={null}>
       <Content />
     </SystemProvider>
   </CurrentProvider>

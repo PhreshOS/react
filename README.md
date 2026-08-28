@@ -20,8 +20,9 @@ It provides two kinds of adapter:
   `provide` prop, then exposes them synchronously through `useProgram()`,
   `useProcess()`, and `useParent()`.
 - `SystemProvider` subscribes before reading exactly the system values named by its
-  required `provide` prop. `useSystemAppearance()`, `useSystemTheme()`, `useDesktopSize()`, and
-  `usePointerPosition()` expose those values synchronously after resolution.
+  required `provide` prop. `useSystemAppearance()`, `useDesktopPreferences()`,
+  `useDesktopSize()`, and `usePointerPosition()` expose those values synchronously
+  after resolution.
 - `useSubscribe()` and `useObserve()` own persistent ordinary-event
   registrations for one mounted React consumer.
 - `useProgramState(program)`, `useProcessState(process)`,
@@ -88,10 +89,10 @@ subscribes before requesting each selected snapshot and prevents an older read
 from overwriting a newer event:
 
 ```tsx
-import { SystemProvider, useDesktopSize, useSystemAppearance, useSystemTheme } from "@phreshos/react"
+import { SystemProvider, useDesktopPreferences, useDesktopSize, useSystemAppearance } from "@phreshos/react"
 
 function Content() {
-  const theme = useSystemTheme()
+  const { theme } = useDesktopPreferences()
   const appearance = useSystemAppearance()
   const desktop = useDesktopSize()
 
@@ -99,7 +100,7 @@ function Content() {
 }
 
 function App() {
-  return <SystemProvider provide={["appearance", "theme", "desktopSize"]} fallback={<p>Loading…</p>}>
+  return <SystemProvider provide={["appearance", "desktopPreferences", "desktopSize"]} fallback={<p>Loading…</p>}>
     <Content />
   </SystemProvider>
 }
@@ -109,7 +110,9 @@ The selection is required and non-empty. Nothing is read or subscribed merely
 because either SDK was imported, and an unselected system value never enters the
 Client. `pointerPosition` is permission-guarded: selecting it does not request
 permission, and resolution fails unless the Program already holds `pointer`.
-The provider renders its fallback until every selected value resolves.
+The provider renders its optional fallback, or `null`, until every selected
+value resolves. `useDesktopPreferences()` also keeps the document root's
+`color-scheme` synchronized with the effective theme.
 
 ```tsx
 import { current } from "@phreshos/client"

@@ -3,6 +3,7 @@ import {
   createElement,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   useSyncExternalStore,
@@ -11,13 +12,13 @@ import {
 import {
   system,
   type Appearance,
+  type DesktopPreferences,
   type DesktopSize,
-  type PointerPosition,
-  type Theme
+  type PointerPosition
 } from "@phreshos/client"
 import LiveSnapshot from "./live-snapshot.js"
 
-const provisionNames = ["appearance", "theme", "desktopSize", "pointerPosition"] as const
+const provisionNames = ["appearance", "desktopPreferences", "desktopSize", "pointerPosition"] as const
 const SystemContext = createContext<SystemContextValue | null>(null)
 
 /** Requests and follows only the system values explicitly selected by the program. */
@@ -26,7 +27,7 @@ export default function SystemProvider(properties: SystemProviderProperties) {
   const selectionKey = normalized.join("\0")
   const selection = useMemo(() => normalized, [selectionKey])
 
-  return createElement(SelectedSystemProvider, { ...properties, key: selectionKey, selection })
+  return createElement(SelectedSystemProvider, { ...properties, fallback: properties.fallback ?? null, key: selectionKey, selection })
 }
 
 function SelectedSystemProvider({ children, fallback, selection }: SelectedSystemProviderProperties) {
@@ -61,9 +62,20 @@ export function useSystemAppearance(): Appearance {
   return useProvided("appearance")
 }
 
-/** Returns the effective local Desktop Theme and follows future changes. */
-export function useSystemTheme(): Theme {
-  return useProvided("theme")
+/** Returns all effective Desktop preferences, follows changes, and synchronizes the document color scheme. */
+export function useDesktopPreferences(): DesktopPreferences {
+  const preferences = useProvided("desktopPreferences")
+
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    const previous = root.style.colorScheme
+
+    root.style.colorScheme = preferences.theme
+
+    return () => { root.style.colorScheme = previous }
+  }, [preferences.theme])
+
+  return preferences
 }
 
 /** Returns the selected desktop size and follows future resize events. */
@@ -97,10 +109,10 @@ function createStores(selection: readonly SystemProvisionName[]): SystemStores {
           subscriber => system.appearance.subscribe("change", subscriber)
         )
         break
-      case "theme":
-        stores.theme = new LiveSnapshot(
-          () => system.theme.snapshot(),
-          subscriber => system.theme.subscribe("change", subscriber)
+      case "desktopPreferences":
+        stores.desktopPreferences = new LiveSnapshot(
+          () => system.desktopPreferences.snapshot(),
+          subscriber => system.desktopPreferences.subscribe("change", subscriber)
         )
         break
       case "desktopSize":
@@ -137,7 +149,7 @@ function normalizeProvision(provide: SystemProvision): readonly SystemProvisionN
 
 const hookNames: Readonly<Record<SystemProvisionName, string>> = {
   appearance: "useSystemAppearance",
-  theme: "useSystemTheme",
+  desktopPreferences: "useDesktopPreferences",
   desktopSize: "useDesktopSize",
   pointerPosition: "usePointerPosition"
 }
@@ -154,7 +166,7 @@ export interface SystemProviderProperties {
   readonly children: ReactNode
 
   /** Content rendered while selected system values resolve. */
-  readonly fallback: ReactNode
+  readonly fallback?: ReactNode
 
   /** Exact system values requested and followed for mounted descendants. */
   readonly provide: SystemProvision
@@ -162,7 +174,7 @@ export interface SystemProviderProperties {
 
 type SystemValues = Readonly<{
   appearance: Appearance
-  theme: Theme
+  desktopPreferences: DesktopPreferences
   desktopSize: DesktopSize
   pointerPosition: PointerPosition | null
 }>

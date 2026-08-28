@@ -19,7 +19,7 @@ const CurrentContext = createContext<CurrentContextValue | null>(null)
 /** Resolves only the current handles explicitly selected by the program. */
 export default function CurrentProvider({
   children,
-  fallback,
+  fallback = null,
   provide,
   waitServer = false
 }: CurrentProviderProperties) {
@@ -137,7 +137,7 @@ export interface CurrentProviderProperties {
   readonly children: ReactNode
 
   /** Content rendered while selected handles or optional Server readiness resolve. */
-  readonly fallback: ReactNode
+  readonly fallback?: ReactNode
 
   /** Exact current values made available to descendant hooks. */
   readonly provide: CurrentProvision
