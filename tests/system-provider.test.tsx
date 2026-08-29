@@ -6,7 +6,7 @@ import SystemProvider, { useDesktopPreferences } from "../source/system-provider
 describe("SystemProvider Desktop preferences", function () {
   afterEach(() => vi.restoreAllMocks())
 
-  it("renders null until selected preferences resolve and synchronizes color-scheme", async function () {
+  it("renders null until selected preferences resolve without changing the document", async function () {
     const requested = deferred<DesktopPreferences>()
     let publish: ((preferences: DesktopPreferences) => void) | undefined
 
@@ -29,11 +29,11 @@ describe("SystemProvider Desktop preferences", function () {
 
     await act(async () => requested.resolve({ theme: "dark", animations: true }))
     await waitFor(() => expect(rendered.getByText("dark:true")).toBeTruthy())
-    expect(root.style.colorScheme).toBe("dark")
+    expect(root.style.colorScheme).toBe("light dark")
 
     act(() => publish?.({ theme: "light", animations: false }))
     expect(rendered.getByText("light:false")).toBeTruthy()
-    expect(root.style.colorScheme).toBe("light")
+    expect(root.style.colorScheme).toBe("light dark")
 
     rendered.unmount()
     expect(root.style.colorScheme).toBe("light dark")

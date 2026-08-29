@@ -3,7 +3,6 @@ import {
   createElement,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useState,
   useSyncExternalStore,
@@ -62,20 +61,9 @@ export function useSystemAppearance(): Appearance {
   return useProvided("appearance")
 }
 
-/** Returns all effective Desktop preferences, follows changes, and synchronizes the document color scheme. */
+/** Returns all effective Desktop preferences and follows authoritative updates. */
 export function useDesktopPreferences(): DesktopPreferences {
-  const preferences = useProvided("desktopPreferences")
-
-  useLayoutEffect(() => {
-    const root = document.documentElement
-    const previous = root.style.colorScheme
-
-    root.style.colorScheme = preferences.theme
-
-    return () => { root.style.colorScheme = previous }
-  }, [preferences.theme])
-
-  return preferences
+  return useProvided("desktopPreferences")
 }
 
 /** Returns the selected desktop size and follows future resize events. */

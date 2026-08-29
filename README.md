@@ -111,8 +111,8 @@ because either SDK was imported, and an unselected system value never enters the
 Client. `pointerPosition` is permission-guarded: selecting it does not request
 permission, and resolution fails unless the Program already holds `pointer`.
 The provider renders its optional fallback, or `null`, until every selected
-value resolves. `useDesktopPreferences()` also keeps the document root's
-`color-scheme` synchronized with the effective theme.
+value resolves. `useDesktopPreferences()` is a pure state adapter; document
+presentation remains an explicit concern of the consuming interface.
 
 ```tsx
 import { current } from "@phreshos/client"
