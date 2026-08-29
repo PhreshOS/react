@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Process, Program, ServiceHandler, Window } from "@phreshos/client"
+import type { Cleanup, Process, Program, Service, Window } from "@phreshos/client"
 import useProcessState from "../source/use-process-state.js"
 import useProgramState from "../source/use-program-state.js"
 import useServiceState from "../source/use-service-state.js"
@@ -119,7 +119,7 @@ describe("explicit domain state hooks", function () {
         order.push(`subscribe:${event}`)
         return events.subscribe(event, listener)
       }
-    } as unknown as ServiceHandler
+    } as unknown as Service
 
     const hook = renderHook(() => useServiceState(service))
 
