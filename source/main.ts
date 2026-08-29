@@ -25,7 +25,6 @@ export { default as useProgramState, type ProgramState } from "./use-program-sta
 export { default as useProcessState, type ProcessState } from "./use-process-state.js"
 export { default as useServiceState, type ServiceState } from "./use-service-state.js"
 export { default as useWindowState } from "./use-window-state.js"
-export { default as useDocumentColorScheme } from "./use-document-color-scheme.js"
 export {
   default as useObserveAsks,
   type AskObservable

@@ -32,8 +32,6 @@ It provides two kinds of adapter:
 - `useObserveAsks()` adapts an Endpoint traffic surface's question observation,
   while `useObserveAnswers()` adapts a Server traffic surface's answer
   observation.
-- `useDocumentColorScheme(theme)` explicitly synchronizes the browser document
-  with an effective Theme and restores the previous value on unmount.
 
 Window needs no React resolution: `current.window` is already a synchronous,
 silent capability object. `CurrentProvider` therefore has no `window` selection
@@ -113,9 +111,9 @@ because either SDK was imported, and an unselected system value never enters the
 Client. `pointerPosition` is permission-guarded: selecting it does not request
 permission, and resolution fails unless the Program already holds `pointer`.
 The provider renders its optional fallback, or `null`, until every selected
-value resolves. `useDesktopPreferences()` is a pure state adapter; document
-presentation remains explicit through `useDocumentColorScheme(theme)`, which
-should be called once at the application root.
+value resolves. `useDesktopPreferences()` is a pure state adapter. The System
+communicates its effective scheme through the Client iframe, while each Client
+HTML document declares which schemes it supports.
 
 ```tsx
 import { current } from "@phreshos/client"

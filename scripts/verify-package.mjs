@@ -79,7 +79,6 @@ for (const name of [
   "CurrentProvider",
   "SystemProvider",
   "useDesktopPreferences",
-  "useDocumentColorScheme",
   "useDesktopSize",
   "useSystemAppearance",
   "useObserve",
@@ -111,7 +110,6 @@ import {
   CurrentProvider,
   SystemProvider,
   useDesktopPreferences,
-  useDocumentColorScheme,
   useSystemAppearance,
   useProcess,
   useProcessState,
@@ -121,7 +119,6 @@ import {
 
 function Content() {
   const { theme } = useDesktopPreferences()
-  useDocumentColorScheme(theme)
   const appearance = useSystemAppearance()
   const desktop = useDesktopSize()
   const process = useProcess()
