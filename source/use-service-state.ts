@@ -12,8 +12,8 @@ export default function useServiceState(service: Service): ServiceState | undefi
   const state = useMemo(() => new LiveState<ServiceState>(
     async () => ({ enabled: await service.enabled() }),
     reduce => combineCleanups(
-      service.subscribe("enable", () => reduce(current => setEnabled(current, true))),
-      service.subscribe("disable", () => reduce(current => setEnabled(current, false)))
+      service.lifecycle.subscribe("enable", () => reduce(current => setEnabled(current, true))),
+      service.lifecycle.subscribe("disable", () => reduce(current => setEnabled(current, false)))
     )
   ), [service])
 

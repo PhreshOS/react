@@ -23,15 +23,15 @@ It provides two kinds of adapter:
   required `provide` prop. `useSystemAppearance()`, `useDesktopPreferences()`,
   `useDesktopSize()`, and `usePointerPosition()` expose those values synchronously
   after resolution.
-- `useSubscribe()` and `useObserve()` own persistent ordinary-event
-  registrations for one mounted React consumer.
+- `useSubscribe()` owns named or all-event registrations for one mounted React
+  consumer.
 - `useProgramState(program)`, `useProcessState(process)`,
   `useServiceState(service)`, and `useWindowState(window)` explicitly compose
   existing reads with future live events for one mounted consumer. They add no
   state operation to another SDK.
-- `useObserveAsks()` adapts an Endpoint traffic surface's question observation,
-  while `useObserveAnswers()` adapts a Server traffic surface's answer
-  observation.
+- `useSubscribeAsks()` adapts an Endpoint traffic surface's question
+  subscription, while `useSubscribeAnswers()` adapts a Server traffic
+  surface's answer subscription.
 
 Window needs no React resolution: `context.window` is already a synchronous,
 silent capability object. `ContextProvider` therefore has no `window` selection
@@ -73,15 +73,20 @@ mount its `useWindowState()` child only while `clientExists` is true. Calling
 the Window hook while the Client is absent lets the existing Window reads
 reject normally.
 
-The ordinary-event and traffic hooks retain the latest value returned by their projector.
-`useSubscribe()` may omit that callback; its default projector is
-`message => message`, so the hook retains the latest message unchanged.
+The ordinary-event and traffic hooks retain the latest value returned by their
+projector. A named `useSubscribe()` may omit that callback; its default
+projector is `message => message`, so the hook retains the latest message
+unchanged. The all-event form receives a correlated capture:
 
 ```tsx
 import { system } from "@phreshos/client"
 import { useSubscribe } from "@phreshos/react"
 
 const desktop = useSubscribe(system.desktop, "resize")
+
+const latest = useSubscribe(system.desktop, capture => {
+  if (capture.event === "resize") return capture.message
+})
 ```
 
 System reads are asynchronous while subscriptions are live-only. `SystemProvider`

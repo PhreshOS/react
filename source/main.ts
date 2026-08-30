@@ -20,16 +20,15 @@ export {
 } from "./system-provider.js"
 
 export { default as useSubscribe } from "./use-subscribe.js"
-export { default as useObserve } from "./use-observe.js"
 export { default as useProgramState, type ProgramState } from "./use-program-state.js"
 export { default as useProcessState, type ProcessState } from "./use-process-state.js"
 export { default as useServiceState, type ServiceState } from "./use-service-state.js"
 export { default as useWindowState } from "./use-window-state.js"
 export {
-  default as useObserveAsks,
-  type AskObservable
-} from "./use-observe-asks.js"
+  default as useSubscribeAsks,
+  type AskSubscribable
+} from "./use-subscribe-asks.js"
 export {
-  default as useObserveAnswers,
-  type AnswerObservable
-} from "./use-observe-answers.js"
+  default as useSubscribeAnswers,
+  type AnswerSubscribable
+} from "./use-subscribe-answers.js"

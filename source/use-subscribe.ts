@@ -1,8 +1,9 @@
 import { useCallback } from "react"
 import type {
-  Channel,
-  ChannelMessage,
+  Captures,
   Cleanup,
+  Context,
+  ContextMessage,
   Endpoint,
   EventMessage,
   EventName,
@@ -27,9 +28,7 @@ type CompatibleEvent<Events extends object, Fallback, Narrowed> = {
     : Narrowed extends Fallback ? OpenEvent : never
 )
 
-type SubscribableTarget = Readonly<{
-  subscribe: unknown
-}>
+type SubscribableTarget = Readonly<{ subscribe: unknown }>
 
 type TargetEvent<Target> = AvailableEvent<
   SubscribableEvents<Target>,
@@ -42,30 +41,25 @@ type TargetMessage<Target, Event extends string> = EventMessage<
   Event
 >
 
-/**
- * Subscribes while mounted and retains the latest message or projected result.
- *
- * The target supplies known message types. An explicit generic or callback
- * annotation may narrow that type, but cannot replace it incompatibly.
- */
+type TargetCapture<Target> = Captures<
+  SubscribableEvents<Target>,
+  SubscribableFallback<Target>
+>
+
+/** Subscribes while mounted and retains the latest named message. */
 export default function useSubscribe<
   Target extends SubscribableTarget,
   Event extends TargetEvent<Target>
->(
-  target: Target,
-  event: Event
-): TargetMessage<Target, Event> | undefined
+>(target: Target, event: Event): TargetMessage<Target, Event> | undefined
 
-export default function useSubscribe<Narrowed = unknown>(
-  target: Endpoint,
+export default function useSubscribe<Narrowed = unknown>(target: Endpoint, event: string): Narrowed | undefined
+
+export default function useSubscribe<Narrowed extends ContextMessage<unknown> = ContextMessage<unknown>>(
+  target: Context,
   event: string
 ): Narrowed | undefined
 
-export default function useSubscribe<Narrowed extends ChannelMessage<unknown> = ChannelMessage<unknown>>(
-  target: Channel,
-  event: string
-): Narrowed | undefined
-
+/** Subscribes while mounted and retains the latest projected named message. */
 export default function useSubscribe<
   Target extends SubscribableTarget,
   Event extends TargetEvent<Target>,
@@ -76,57 +70,56 @@ export default function useSubscribe<
   project: (message: TargetMessage<Target, Event>) => Result
 ): Awaited<Result> | undefined
 
-export default function useSubscribe<
-  Narrowed,
-  Result = unknown
->(
+export default function useSubscribe<Narrowed, Result = unknown>(
   target: Endpoint,
   event: string,
   project: (message: Narrowed) => Result
 ): Awaited<Result> | undefined
 
-export default function useSubscribe<
-  Narrowed extends ChannelMessage<unknown>,
-  Result = unknown
->(
-  target: Channel,
+export default function useSubscribe<Narrowed extends ContextMessage<unknown>, Result = unknown>(
+  target: Context,
   event: string,
   project: (message: Narrowed) => Result
 ): Awaited<Result> | undefined
 
-export default function useSubscribe<
-  Narrowed,
-  Events extends object,
-  Fallback,
-  Result
->(
+export default function useSubscribe<Narrowed, Events extends object, Fallback, Result>(
   target: Subscribable<Events, Fallback>,
   event: CompatibleEvent<Events, Fallback, Narrowed>,
   project: (message: Narrowed) => Result
 ): Awaited<Result> | undefined
 
-export default function useSubscribe<
-  Events extends object,
-  Fallback,
-  Event extends string
->(
-  target: Subscribable<Events, Fallback>,
-  event: Event,
-  project?: (message: EventMessage<Events, Fallback, Event>) => unknown
+/** Subscribes across every event and retains the latest projected capture. */
+export default function useSubscribe<Target extends SubscribableTarget, Result>(
+  target: Target,
+  project: (capture: TargetCapture<Target>) => Result
+): Awaited<Result> | undefined
+
+export default function useSubscribe(
+  target: Subscribable<object, unknown>,
+  eventOrProject: string | ((capture: Captures<object, unknown>) => unknown),
+  namedProject?: (message: unknown) => unknown
 ) {
+  const event = typeof eventOrProject === "string" ? eventOrProject : null
   const connect = useCallback(
-    (receive: EventSubscriber<EventMessage<Events, Fallback, Event>>) => {
+    (receive: EventSubscriber<unknown>) => {
+      if (event === null) {
+        const subscribe = target.subscribe as unknown as (
+          subscriber: EventSubscriber<Captures<object, unknown>>
+        ) => Cleanup
+        return subscribe(receive as EventSubscriber<Captures<object, unknown>>)
+      }
+
       const subscribe = target.subscribe as unknown as (
         event: string,
-        subscriber: EventSubscriber<EventMessage<Events, Fallback, Event>>
+        subscriber: EventSubscriber<unknown>
       ) => Cleanup
-
       return subscribe(event, receive)
     },
     [target, event]
   )
 
-  return useEventResult(connect, project ?? identity)
+  const project = event === null ? eventOrProject : namedProject ?? identity
+  return useEventResult(connect, project as (message: unknown) => unknown)
 }
 
 function identity<Message>(message: Message) {

@@ -1,13 +1,29 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Process, Program, Service, Window } from "@phreshos/client"
+import type { Cleanup, Process, Program, Service, Subscribable, Window } from "@phreshos/client"
 import useProcessState from "../source/use-process-state.js"
 import useProgramState from "../source/use-program-state.js"
 import useServiceState from "../source/use-service-state.js"
 import useWindowState from "../source/use-window-state.js"
+import useSubscribe from "../source/use-subscribe.js"
 
 describe("explicit domain state hooks", function () {
+  it("projects correlated captures when subscribing across every event", function () {
+    const events = new Subject()
+    const target = events as unknown as Subscribable<{ count: number, label: string }, never>
+    const hook = renderHook(() => useSubscribe(target, capture => {
+      if (capture.event === "count") return capture.message.toFixed(0)
+      return capture.message.toUpperCase()
+    }))
+
+    act(() => events.emit("count", 4))
+    expect(hook.result.current).toBe("4")
+
+    act(() => events.emit("label", "ready"))
+    expect(hook.result.current).toBe("READY")
+  })
+
   it("subscribes before the Program read and preserves intervening lifecycle events", async function () {
     const events = new Subject()
     const processEvents = new Subject()
@@ -115,9 +131,11 @@ describe("explicit domain state hooks", function () {
         order.push("read")
         return snapshot.promise
       },
-      subscribe: (event: string, listener: Listener) => {
-        order.push(`subscribe:${event}`)
-        return events.subscribe(event, listener)
+      lifecycle: {
+        subscribe: (event: string, listener: Listener) => {
+          order.push(`subscribe:${event}`)
+          return events.subscribe(event, listener)
+        }
       }
     } as unknown as Service
 
@@ -206,26 +224,38 @@ type Listener = (message: unknown) => unknown
 
 class Subject {
   private readonly listeners = new Map<string, Set<Listener>>()
+  private readonly every = new Set<(capture: { event: string, message: unknown }) => unknown>()
 
-  public readonly subscribe = (event: string, listener: Listener): Cleanup => {
+  public readonly subscribe = (
+    eventOrListener: string | ((capture: { event: string, message: unknown }) => unknown),
+    listener?: Listener
+  ): Cleanup => {
+    if (typeof eventOrListener !== "string") {
+      this.every.add(eventOrListener)
+      return () => this.every.delete(eventOrListener)
+    }
+
+    const event = eventOrListener
+    const subscriber = listener as Listener
     const listeners = this.listeners.get(event) ?? new Set<Listener>()
-    listeners.add(listener)
+    listeners.add(subscriber)
     this.listeners.set(event, listeners)
 
     return () => {
-      listeners.delete(listener)
+      listeners.delete(subscriber)
       if (listeners.size === 0) this.listeners.delete(event)
     }
   }
 
   public emit(event: string, message: unknown) {
     for (const listener of this.listeners.get(event) ?? []) listener(message)
+    for (const listener of this.every) listener({ event, message })
   }
 
   public get listenerCount() {
     let count = 0
     for (const listeners of this.listeners.values()) count += listeners.size
-    return count
+    return count + this.every.size
   }
 }
 

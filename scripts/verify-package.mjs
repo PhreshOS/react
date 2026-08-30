@@ -81,9 +81,6 @@ for (const name of [
   "useDesktopPreferences",
   "useDesktopSize",
   "useSystemAppearance",
-  "useObserve",
-  "useObserveAnswers",
-  "useObserveAsks",
   "useParent",
   "usePointerPosition",
   "useProcess",
@@ -92,10 +89,15 @@ for (const name of [
   "useProgramState",
   "useServiceState",
   "useSubscribe",
+  "useSubscribeAnswers",
+  "useSubscribeAsks",
   "useWindowState"
 ]) assert.equal(typeof sdk[name], "function", name)
 
 assert.equal("CurrentProvider" in sdk, false)
+assert.equal("useObserve" in sdk, false)
+assert.equal("useObserveAnswers" in sdk, false)
+assert.equal("useObserveAsks" in sdk, false)
 assert.equal(messages.length, 0, "importing the React SDK initialized Client transport eagerly")
 `
   )
