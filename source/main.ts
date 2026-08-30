@@ -1,12 +1,12 @@
 export {
-  default as CurrentProvider,
+  default as ContextProvider,
   useParent,
   useProcess,
   useProgram,
-  type CurrentProvision,
-  type CurrentProvisionName,
-  type CurrentProviderProperties
-} from "./current-provider.js"
+  type ContextProvision,
+  type ContextProvisionName,
+  type ContextProviderProperties
+} from "./context-provider.js"
 
 export {
   default as SystemProvider,

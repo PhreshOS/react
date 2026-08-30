@@ -1,6 +1,6 @@
 {
   "name": "@phreshos/react",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "React adapters for the Client SDK.",
   "type": "module",
   "main": "dist/main.js",
@@ -47,12 +47,12 @@
     "prepack": "node --run test && node --run build"
   },
   "peerDependencies": {
-    "@phreshos/client": "^0.1.24",
+    "@phreshos/client": "^0.1.25",
     "@phreshos/core": "^0.1.24",
     "react": "^19.2.0"
   },
   "devDependencies": {
-    "@phreshos/client": "^0.1.24",
+    "@phreshos/client": "^0.1.25",
     "@phreshos/core": "^0.1.24",
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.18",

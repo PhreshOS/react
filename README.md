@@ -16,7 +16,7 @@ dependencies.
 
 It provides two kinds of adapter:
 
-- `CurrentProvider` resolves exactly the current values named by its required
+- `ContextProvider` resolves exactly the runtime values named by its required
   `provide` prop, then exposes them synchronously through `useProgram()`,
   `useProcess()`, and `useParent()`.
 - `SystemProvider` subscribes before reading exactly the system values named by its
@@ -33,8 +33,8 @@ It provides two kinds of adapter:
   while `useObserveAnswers()` adapts a Server traffic surface's answer
   observation.
 
-Window needs no React resolution: `current.window` is already a synchronous,
-silent capability object. `CurrentProvider` therefore has no `window` selection
+Window needs no React resolution: `context.window` is already a synchronous,
+silent capability object. `ContextProvider` therefore has no `window` selection
 and the React SDK exposes no pass-through `useWindow()` hook.
 
 The domain state hooks return only mutable state; identity and immutable
@@ -116,9 +116,9 @@ communicates its effective scheme through the Client iframe, while each Client
 HTML document declares which schemes it supports.
 
 ```tsx
-import { current } from "@phreshos/client"
+import { context } from "@phreshos/client"
 import {
-  CurrentProvider,
+  ContextProvider,
   useProgram,
   useSubscribe
 } from "@phreshos/react"
@@ -126,7 +126,7 @@ import {
 function Counter() {
   const program = useProgram()
 
-  const count = useSubscribe(current, "count", message => {
+  const count = useSubscribe(context, "count", message => {
     return Number(message.payload)
   })
 
@@ -135,14 +135,14 @@ function Counter() {
 
 export default function App() {
   return (
-    <CurrentProvider provide={["program"]} fallback={<p>Loading…</p>} waitServer>
+    <ContextProvider provide={["program"]} fallback={<p>Loading…</p>} waitServer>
       <Counter />
-    </CurrentProvider>
+    </ContextProvider>
   )
 }
 ```
 
-Using a current or system hook outside its provider, or without selecting its
+Using a context or system hook outside its provider, or without selecting its
 value, throws a configuration error. Neither provider supplies an implicit
 "everything" selection, so adding a future capability cannot make it enter an
 existing application.

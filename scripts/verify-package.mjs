@@ -76,7 +76,7 @@ globalThis.window = { parent, addEventListener() {} }
 const sdk = await import("@phreshos/react")
 
 for (const name of [
-  "CurrentProvider",
+  "ContextProvider",
   "SystemProvider",
   "useDesktopPreferences",
   "useDesktopSize",
@@ -95,6 +95,7 @@ for (const name of [
   "useWindowState"
 ]) assert.equal(typeof sdk[name], "function", name)
 
+assert.equal("CurrentProvider" in sdk, false)
 assert.equal(messages.length, 0, "importing the React SDK initialized Client transport eagerly")
 `
   )
@@ -105,9 +106,9 @@ assert.equal(messages.length, 0, "importing the React SDK initialized Client tra
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { current, system } from "@phreshos/client"
+    `import { context, system } from "@phreshos/client"
 import {
-  CurrentProvider,
+  ContextProvider,
   SystemProvider,
   useDesktopPreferences,
   useSystemAppearance,
@@ -116,6 +117,8 @@ import {
   useServiceState,
   useDesktopSize
 } from "@phreshos/react"
+// @ts-expect-error the runtime provider is named ContextProvider
+import { CurrentProvider } from "@phreshos/react"
 
 function Content() {
   const { theme } = useDesktopPreferences()
@@ -128,14 +131,14 @@ function Content() {
 }
 
 const tree = (
-  <CurrentProvider provide={["process"]} fallback={null}>
+  <ContextProvider provide={["process"]} fallback={null}>
     <SystemProvider provide={["appearance", "desktopPreferences", "desktopSize"]} fallback={null}>
       <Content />
     </SystemProvider>
-  </CurrentProvider>
+  </ContextProvider>
 )
 
-void current
+void context
 void tree
 `
   )
