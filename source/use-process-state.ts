@@ -22,23 +22,13 @@ export default function useProcessState(process: Process): ProcessState | undefi
       return { exited, serverExists, clientExists }
     },
     reduce => combineCleanups(
-      process.subscribe("endpointStart", endpoint => reduce(current => endpointPresence(current, process, endpoint, true))),
-      process.subscribe("endpointStop", endpoint => reduce(current => endpointPresence(current, process, endpoint, false))),
+      process.server.lifecycle.subscribe("start", () => reduce(current => current.serverExists ? current : { ...current, serverExists: true })),
+      process.server.lifecycle.subscribe("stop", () => reduce(current => current.serverExists ? { ...current, serverExists: false } : current)),
+      process.client.lifecycle.subscribe("start", () => reduce(current => current.clientExists ? current : { ...current, clientExists: true })),
+      process.client.lifecycle.subscribe("stop", () => reduce(current => current.clientExists ? { ...current, clientExists: false } : current)),
       process.subscribe("exit", () => reduce(current => ({ ...current, exited: true, serverExists: false, clientExists: false })))
     )
   ), [process])
 
   return useSyncExternalStore(state.subscribe, state.snapshot, state.snapshot)
-}
-
-function endpointPresence(state: ProcessState, process: Process, endpoint: unknown, exists: boolean): ProcessState {
-  if (endpoint === process.server) {
-    return state.serverExists === exists ? state : { ...state, serverExists: exists }
-  }
-
-  if (endpoint === process.client) {
-    return state.clientExists === exists ? state : { ...state, clientExists: exists }
-  }
-
-  return state
 }

@@ -63,7 +63,7 @@ describe("explicit domain state hooks", function () {
 
     await waitFor(() => expect(hook.result.current).toEqual({ installed: true, processes: [created] }))
 
-    act(() => events.emit("uninstall", { everythingRemoved: false }))
+    act(() => events.emit("uninstall", false))
     expect(hook.result.current?.installed).toBe(false)
 
     hook.unmount()
@@ -73,8 +73,10 @@ describe("explicit domain state hooks", function () {
 
   it("maintains Process endpoint presence from lifecycle events", async function () {
     const events = new Subject()
-    const server = { exists: async () => true }
-    const client = { exists: async () => true }
+    const serverLifecycle = new Subject()
+    const clientLifecycle = new Subject()
+    const server = { exists: async () => true, lifecycle: { subscribe: serverLifecycle.subscribe } }
+    const client = { exists: async () => true, lifecycle: { subscribe: clientLifecycle.subscribe } }
     const process = {
       server,
       client,
@@ -90,10 +92,10 @@ describe("explicit domain state hooks", function () {
       clientExists: true
     }))
 
-    act(() => events.emit("endpointStop", client))
+    act(() => clientLifecycle.emit("stop", undefined))
     expect(hook.result.current?.clientExists).toBe(false)
 
-    act(() => events.emit("endpointStart", client))
+    act(() => clientLifecycle.emit("start", undefined))
     expect(hook.result.current?.clientExists).toBe(true)
 
     act(() => events.emit("exit", { status: "exited", code: 0, signal: null }))
