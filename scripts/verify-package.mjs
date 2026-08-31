@@ -128,8 +128,8 @@ function Content() {
   const desktop = useDesktopSize()
   const process = useProcess()
   const state = useProcessState(process)
-  const service = useServiceState(system.service({ program: "counter", endpoint: "server", name: "state" }))
-  return <span style={{ color: appearance.foreground[theme], padding: appearance.spacing.light }}>{desktop.width + Number(state?.clientExists) + Number(service?.enabled)}</span>
+  const service = useServiceState(system.service({ program: "counter", process: "main", endpoint: "server" }))
+  return <span style={{ color: appearance.foreground[theme], padding: appearance.spacing.light }}>{desktop.width + Number(state?.clientExists) + Number(service?.exists)}</span>
 }
 
 const tree = (

@@ -129,7 +129,7 @@ describe("explicit domain state hooks", function () {
     const snapshot = deferred<boolean>()
     const order: string[] = []
     const service = {
-      enabled: () => {
+      exists: () => {
         order.push("read")
         return snapshot.promise
       },
@@ -144,15 +144,15 @@ describe("explicit domain state hooks", function () {
     const hook = renderHook(() => useServiceState(service))
 
     expect(hook.result.current).toBeUndefined()
-    expect(order).toEqual(["subscribe:enable", "subscribe:disable", "read"])
+    expect(order).toEqual(["subscribe:start", "subscribe:stop", "read"])
 
-    act(() => events.emit("enable", undefined))
+    act(() => events.emit("start", undefined))
     snapshot.resolve(true)
 
-    await waitFor(() => expect(hook.result.current).toEqual({ enabled: true }))
+    await waitFor(() => expect(hook.result.current).toEqual({ exists: true }))
 
-    act(() => events.emit("disable", undefined))
-    expect(hook.result.current).toEqual({ enabled: false })
+    act(() => events.emit("stop", undefined))
+    expect(hook.result.current).toEqual({ exists: false })
 
     hook.unmount()
     expect(events.listenerCount).toBe(0)
