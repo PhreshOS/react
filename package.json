@@ -1,6 +1,6 @@
 {
   "name": "@phreshos/react",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "React adapters for the Client SDK.",
   "type": "module",
   "main": "dist/main.js",
