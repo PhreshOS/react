@@ -2,9 +2,6 @@ import { useCallback } from "react"
 import type {
   Captures,
   Cleanup,
-  Context,
-  ContextMessage,
-  Endpoint,
   EventMessage,
   EventName,
   EventSubscriber,
@@ -52,13 +49,6 @@ export default function useSubscribe<
   Event extends TargetEvent<Target>
 >(target: Target, event: Event): TargetMessage<Target, Event> | undefined
 
-export default function useSubscribe<Narrowed = unknown>(target: Endpoint, event: string): Narrowed | undefined
-
-export default function useSubscribe<Narrowed extends ContextMessage<unknown> = ContextMessage<unknown>>(
-  target: Context,
-  event: string
-): Narrowed | undefined
-
 /** Subscribes while mounted and retains the latest projected named message. */
 export default function useSubscribe<
   Target extends SubscribableTarget,
@@ -68,18 +58,6 @@ export default function useSubscribe<
   target: Target,
   event: Event,
   project: (message: TargetMessage<Target, Event>) => Result
-): Awaited<Result> | undefined
-
-export default function useSubscribe<Narrowed, Result = unknown>(
-  target: Endpoint,
-  event: string,
-  project: (message: Narrowed) => Result
-): Awaited<Result> | undefined
-
-export default function useSubscribe<Narrowed extends ContextMessage<unknown>, Result = unknown>(
-  target: Context,
-  event: string,
-  project: (message: Narrowed) => Result
 ): Awaited<Result> | undefined
 
 export default function useSubscribe<Narrowed, Events extends object, Fallback, Result>(
