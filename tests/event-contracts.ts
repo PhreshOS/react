@@ -15,21 +15,29 @@ function declaredEvents(endpoint: Endpoint<Events>) {
   const result: number | undefined = projected
   void result
 
-  // @ts-expect-error A React subscription obeys the target's event contract.
   useSubscribe(endpoint, "unknown")
 
-  // @ts-expect-error A projected React subscription obeys the target's event contract.
   useSubscribe(endpoint, "unknown", message => message)
 }
 
 void declaredEvents
 
-function undeclaredEvents(endpoint: Endpoint) {
-  // @ts-expect-error An Endpoint with no event declaration exposes no event names.
+function openEvents(endpoint: Endpoint) {
+  useSubscribe(endpoint, "unknown")
+
+  const projected = useSubscribe(endpoint, "changed", (message: number) => message)
+  const value: number | undefined = projected
+  void value
+}
+
+void openEvents
+
+function closedEvents(endpoint: Endpoint<{}, never>) {
+  // @ts-expect-error A React subscription obeys an explicitly closed event contract.
   useSubscribe(endpoint, "unknown")
 }
 
-void undeclaredEvents
+void closedEvents
 
 function openContext(context: Context) {
   const message = useSubscribe(context, "application-event")
