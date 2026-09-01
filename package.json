@@ -1,6 +1,6 @@
 {
   "name": "@phreshos/react",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "Runtime-neutral React adapters for PhreshOS contracts.",
   "type": "module",
   "main": "dist/main.js",
@@ -47,11 +47,11 @@
     "prepack": "node --run test && node --run build"
   },
   "peerDependencies": {
-    "@phreshos/core": "^0.1.29",
+    "@phreshos/core": "^0.1.31",
     "react": "^19.2.0"
   },
   "devDependencies": {
-    "@phreshos/core": "^0.1.29",
+    "@phreshos/core": "^0.1.31",
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
