@@ -1,6 +1,6 @@
 # Contributing
 
-React adapts explicit PhreshOS Client capabilities to React lifecycles. A
+React adapts explicit PhreshOS contracts to React lifecycles. A
 change belongs here when it owns React resolution, subscription, cleanup, or
 derivation without redefining domain objects or moving system authority into a
 component or hook.
@@ -18,10 +18,10 @@ bun run verify
 package, packs the actual publication artifact, installs it in a temporary
 consumer, and checks its runtime and TypeScript entry points.
 
-Providers must resolve only their required explicit selections. Importing the
+Providers must resolve only their explicitly supplied values. Importing the
 package must not request host state or establish live registrations. Keep
-shared contracts in `@phreshos/core`, endpoint capabilities in
-`@phreshos/client`, and host implementations in the system.
+shared contracts in `@phreshos/core` and runtime integrations outside this
+package. React must not depend on an environment SDK or global runtime object.
 
 Changes should include focused verification for public React behavior and
 must preserve the built-only package boundary. Consumers must never import

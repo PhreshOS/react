@@ -11,7 +11,7 @@ import type {
   Subscribable,
   SubscribableEvents,
   SubscribableFallback
-} from "@phreshos/client"
+} from "@phreshos/core"
 import useEventResult from "./event-result.js"
 
 type OpenEvent = string & {}

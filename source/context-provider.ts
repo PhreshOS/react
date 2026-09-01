@@ -7,147 +7,108 @@ import {
   useState,
   type ReactNode
 } from "react"
-import {
-  context,
-  type Process,
-  type Program
-} from "@phreshos/client"
+import type { Process, Program } from "@phreshos/core"
 
-const provisionNames = ["program", "process", "parent"] as const
-const RuntimeContext = createContext<RuntimeContextValue | null>(null)
+const RuntimeContext = createContext<Partial<ContextValues> | null>(null)
 
-/** Resolves only the runtime handles explicitly selected by the program. */
+/** Resolves only the runtime handles supplied by the surrounding runtime. */
 export default function ContextProvider({
   children,
   fallback = null,
-  provide,
-  waitServer = false
+  parent,
+  process,
+  program
 }: ContextProviderProperties) {
-  const normalized = normalizeProvision(provide)
-  const selectionKey = normalized.join("\0")
-  const selection = useMemo(() => normalized, [selectionKey])
+  const sources = useMemo<ContextSources>(() => ({ parent, process, program }), [parent, process, program])
+  const [resolution, setResolution] = useState<Resolution>({ status: "pending", sources })
 
-  return createElement(SelectedContextProvider, {
-    children,
-    fallback,
-    key: `${selectionKey}\0${String(waitServer)}`,
-    selection,
-    waitServer
-  })
-}
-
-function SelectedContextProvider({ children, fallback, selection, waitServer }: SelectedContextProviderProperties) {
-  const [resolution, setResolution] = useState<Resolution>({ status: "pending" })
+  if (parent === undefined && process === undefined && program === undefined) {
+    throw new Error("ContextProvider requires at least one runtime handle")
+  }
 
   useEffect(() => {
     let active = true
 
-    setResolution({ status: "pending" })
-
-    void resolveContext(selection, waitServer).then(value => {
-      if (active) setResolution({ status: "ready", value })
+    void resolveSources(sources).then(value => {
+      if (active) setResolution({ status: "ready", sources, value })
     }, error => {
-      if (active) setResolution({ status: "error", error })
+      if (active) setResolution({ status: "error", sources, error })
     })
 
     return () => { active = false }
-  }, [selection, waitServer])
+  }, [sources])
 
-  if (resolution.status === "pending") return fallback
+  if (resolution.sources !== sources || resolution.status === "pending") return fallback
   if (resolution.status === "error") throw resolution.error
 
   return createElement(RuntimeContext.Provider, { value: resolution.value }, children)
 }
 
-async function resolveContext(selection: readonly ContextProvisionName[], waitServer: boolean | number): Promise<RuntimeContextValue> {
-  const serverReady = typeof waitServer === "number"
-    ? context.server.waitReady(waitServer)
-    : waitServer ? context.server.waitReady() : undefined
+async function resolveSources(sources: ContextSources): Promise<Partial<ContextValues>> {
+  const entries = await Promise.all(contextNames.flatMap(name => {
+    const source = sources[name]
+    return source === undefined ? [] : [resolveSource(name, source as ContextSource<ContextValues[typeof name]>)]
+  }))
 
-  const [entries] = await Promise.all([
-    Promise.all(selection.map(resolveProvision)),
-    serverReady
-  ])
-
-  return {
-    provided: new Set(selection),
-    values: Object.fromEntries(entries) as Partial<ContextValues>
-  }
+  return Object.fromEntries(entries) as Partial<ContextValues>
 }
 
-async function resolveProvision(name: ContextProvisionName): Promise<readonly [ContextProvisionName, ContextValues[ContextProvisionName]]> {
-  switch (name) {
-    case "program": return [name, await context.program()]
-    case "process": return [name, await context.process()]
-    case "parent": return [name, await context.parent()]
-  }
+async function resolveSource<Name extends ContextName>(
+  name: Name,
+  source: ContextSource<ContextValues[Name]>
+): Promise<readonly [Name, ContextValues[Name]]> {
+  const value = typeof source === "function" ? source() : source
+  return [name, await value]
 }
 
-/** Returns the current Program selected by the nearest provider. */
-export function useProgram(): Program {
-  return useProvided("program")
+/** Returns the current Program supplied by the nearest provider. */
+export function useProgram<Handle extends Program = Program>(): Handle {
+  return useProvided("program") as Handle
 }
 
-/** Returns the current Process selected by the nearest provider. */
-export function useProcess(): Process {
-  return useProvided("process")
+/** Returns the current Process supplied by the nearest provider. */
+export function useProcess<Handle extends Process = Process>(): Handle {
+  return useProvided("process") as Handle
 }
 
-/** Returns the current Process's selected visible parent. */
-export function useParent(): Process | null {
-  return useProvided("parent")
+/** Returns the current Process's supplied visible parent. */
+export function useParent<Handle extends Process = Process>(): Handle | null {
+  return useProvided("parent") as Handle | null
 }
 
-function useProvided<Name extends ContextProvisionName>(name: Name): ContextValues[Name] {
-  const providedContext = useContext(RuntimeContext)
+function useProvided<Name extends ContextName>(name: Name): ContextValues[Name] {
+  const context = useContext(RuntimeContext)
 
-  if (!providedContext) throw new Error(`use${hookName(name)} must be used inside ContextProvider`)
-  if (!providedContext.provided.has(name)) throw new Error(`use${hookName(name)} requires "${name}" in ContextProvider's provide prop`)
+  if (!context) throw new Error(`${hookNames[name]} must be used inside ContextProvider`)
+  if (!(name in context)) throw new Error(`${hookNames[name]} requires ContextProvider's ${name} prop`)
 
-  return providedContext.values[name] as ContextValues[Name]
+  return context[name] as ContextValues[Name]
 }
 
-function normalizeProvision(provide: ContextProvision): readonly ContextProvisionName[] {
-  if (!Array.isArray(provide) || provide.length === 0) throw new Error("ContextProvider's provide prop must select at least one runtime value")
+const contextNames = ["program", "process", "parent"] as const
 
-  const selected = new Set<ContextProvisionName>()
-
-  for (const name of provide) {
-    if (!provisionNames.includes(name)) throw new Error(`ContextProvider cannot provide "${String(name)}"`)
-    if (selected.has(name)) throw new Error(`ContextProvider's provide prop selects "${name}" more than once`)
-    selected.add(name)
-  }
-
-  return [...selected]
+const hookNames: Readonly<Record<ContextName, string>> = {
+  parent: "useParent",
+  process: "useProcess",
+  program: "useProgram"
 }
 
-function hookName(name: ContextProvisionName) {
-  return name.charAt(0).toUpperCase() + name.slice(1)
-}
-
-/** Values that ContextProvider can resolve. */
-export type ContextProvisionName = typeof provisionNames[number]
-
-/** Required non-empty selection of runtime values. */
-export type ContextProvision = readonly [ContextProvisionName, ...ContextProvisionName[]]
+/** A stable handle or resolver supplied by one runtime integration. */
+export type ContextSource<Value> = Value | (() => Value | PromiseLike<Value>)
 
 /** Properties accepted by ContextProvider. */
-export interface ContextProviderProperties {
-  /** Content rendered after every selected runtime handle has resolved. */
+export type ContextProviderProperties = Readonly<{
   readonly children: ReactNode
-
-  /** Content rendered while selected handles or optional Server readiness resolve. */
   readonly fallback?: ReactNode
+}> & AtLeastOne<ContextSources>
 
-  /** Exact runtime values made available to descendant hooks. */
-  readonly provide: ContextProvision
+type ContextSources = Readonly<{
+  readonly parent?: ContextSource<Process | null>
+  readonly process?: ContextSource<Process>
+  readonly program?: ContextSource<Program>
+}>
 
-  /**
-   * Waits for the Process's Server before rendering children.
-   * `true` uses the default ten-second deadline; a number sets milliseconds.
-   */
-  readonly waitServer?: boolean | number
-}
+type ContextName = typeof contextNames[number]
 
 type ContextValues = Readonly<{
   program: Program
@@ -155,17 +116,11 @@ type ContextValues = Readonly<{
   parent: Process | null
 }>
 
-type RuntimeContextValue = Readonly<{
-  provided: ReadonlySet<ContextProvisionName>
-  values: Partial<ContextValues>
-}>
-
-type SelectedContextProviderProperties = Omit<ContextProviderProperties, "provide" | "waitServer"> & Readonly<{
-  selection: readonly ContextProvisionName[]
-  waitServer: boolean | number
-}>
-
 type Resolution =
-  | Readonly<{ status: "pending" }>
-  | Readonly<{ status: "ready", value: RuntimeContextValue }>
-  | Readonly<{ status: "error", error: unknown }>
+  | Readonly<{ status: "pending", sources: ContextSources }>
+  | Readonly<{ status: "ready", sources: ContextSources, value: Partial<ContextValues> }>
+  | Readonly<{ status: "error", sources: ContextSources, error: unknown }>
+
+type AtLeastOne<Values> = {
+  [Name in keyof Values]-?: Required<Pick<Values, Name>> & Partial<Omit<Values, Name>>
+}[keyof Values]

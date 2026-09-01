@@ -53,7 +53,6 @@ try {
       "--no-fund",
       "--no-package-lock",
       archive,
-      `@phreshos/client@${manifest.devDependencies["@phreshos/client"]}`,
       `@phreshos/core@${manifest.devDependencies["@phreshos/core"]}`,
       `react@${manifest.devDependencies.react}`,
       `@types/react@${manifest.devDependencies["@types/react"]}`
@@ -69,20 +68,16 @@ try {
     join(consumer, "runtime.mjs"),
     `import assert from "node:assert/strict"
 
-const messages = []
-const parent = { postMessage: message => messages.push(message) }
-globalThis.window = { parent, addEventListener() {} }
-
 const sdk = await import("@phreshos/react")
 
 for (const name of [
   "ContextProvider",
   "SystemProvider",
+  "useDesktopPointer",
   "useDesktopPreferences",
-  "useDesktopSize",
+  "useDesktopSurface",
   "useSystemAppearance",
   "useParent",
-  "usePointerPosition",
   "useProcess",
   "useProcessState",
   "useProgram",
@@ -98,7 +93,6 @@ assert.equal("CurrentProvider" in sdk, false)
 assert.equal("useObserve" in sdk, false)
 assert.equal("useObserveAnswers" in sdk, false)
 assert.equal("useObserveAsks" in sdk, false)
-assert.equal(messages.length, 0, "importing the React SDK initialized Client transport eagerly")
 `
   )
   execFileSync(process.execPath, [join(consumer, "runtime.mjs")], {
@@ -108,16 +102,22 @@ assert.equal(messages.length, 0, "importing the React SDK initialized Client tra
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { context, system } from "@phreshos/client"
+    `import type {
+  AppearanceSource,
+  DesktopPreferencesSource,
+  DesktopSurfaceSource,
+  Process,
+  Service
+} from "@phreshos/core"
 import {
   ContextProvider,
   SystemProvider,
   useDesktopPreferences,
+  useDesktopSurface,
   useSystemAppearance,
   useProcess,
   useProcessState,
-  useServiceState,
-  useDesktopSize
+  useServiceState
 } from "@phreshos/react"
 // @ts-expect-error the runtime provider is named ContextProvider
 import { CurrentProvider } from "@phreshos/react"
@@ -125,22 +125,32 @@ import { CurrentProvider } from "@phreshos/react"
 function Content() {
   const { theme } = useDesktopPreferences()
   const appearance = useSystemAppearance()
-  const desktop = useDesktopSize()
+  const desktop = useDesktopSurface()
   const process = useProcess()
   const state = useProcessState(process)
-  const service = useServiceState(system.service({ program: "counter", process: "main", endpoint: "server" }))
-  return <span style={{ color: appearance.foreground[theme], padding: appearance.spacing.light }}>{desktop.width + Number(state?.clientExists) + Number(service?.exists)}</span>
+  const service = useServiceState(runtimeService)
+  return <span style={{ color: appearance.foreground[theme], padding: appearance.spacing.light }}>{desktop.size.width + Number(state?.clientExists) + Number(service?.exists)}</span>
 }
 
+declare const appearance: AppearanceSource
+declare const desktopPreferences: DesktopPreferencesSource
+declare const desktopSurface: DesktopSurfaceSource
+declare const process: Process
+declare const runtimeService: Service
+
 const tree = (
-  <ContextProvider provide={["process"]} fallback={null}>
-    <SystemProvider provide={["appearance", "desktopPreferences", "desktopSize"]} fallback={null}>
+  <ContextProvider process={process} fallback={null}>
+    <SystemProvider
+      appearance={appearance}
+      desktopPreferences={desktopPreferences}
+      desktopSurface={desktopSurface}
+      fallback={null}
+    >
       <Content />
     </SystemProvider>
   </ContextProvider>
 )
 
-void context
 void tree
 `
   )

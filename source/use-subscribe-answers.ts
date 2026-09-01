@@ -1,5 +1,5 @@
 import { useCallback } from "react"
-import type { AnswerCapture, AnswerSubscriber, Cleanup } from "@phreshos/client"
+import type { AnswerCapture, AnswerSubscriber, Cleanup } from "@phreshos/core"
 import useEventResult from "./event-result.js"
 
 /** Any Server traffic surface capable of subscribing to its outgoing answers. */

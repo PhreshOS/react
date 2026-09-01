@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react"
-import type { Service } from "@phreshos/client"
+import type { Service } from "@phreshos/core"
 import LiveState, { combineCleanups } from "./live-state.js"
 
 /** Live existence of one configured Endpoint service. */

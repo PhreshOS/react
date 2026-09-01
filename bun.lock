@@ -5,7 +5,6 @@
     "": {
       "name": "@phreshos/react",
       "devDependencies": {
-        "@phreshos/client": "^0.1.28",
         "@phreshos/core": "^0.1.29",
         "@testing-library/react": "^16.3.0",
         "@types/react": "^19.2.18",
@@ -17,7 +16,6 @@
         "vitest": "^4.1.1",
       },
       "peerDependencies": {
-        "@phreshos/client": "^0.1.28",
         "@phreshos/core": "^0.1.29",
         "react": "^19.2.0",
       },
@@ -52,11 +50,7 @@
 
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
-    "@msgpack/msgpack": ["@msgpack/msgpack@3.1.3", "", {}, "sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA=="],
-
     "@oxc-project/types": ["@oxc-project/types@0.144.0", "", {}, "sha512-nuhZIOLuI6TFQ32I/WnUx+SCPY7SdSKwgnFHydAuoS1+Z4BRcaP+RRJmGzl9lw+0OFF7UmaESf7KQRXaNLHypg=="],
-
-    "@phreshos/client": ["@phreshos/client@0.1.28", "", { "dependencies": { "@msgpack/msgpack": "^3.1.3" }, "peerDependencies": { "@phreshos/core": "^0.1.29" } }, "sha512-bwVc3hC24o5fqGifCrXPLq9aCEnIpJ8rqGx6cScsA1sJXKGnuShhfa8Mcj4wYuEEE1GG4dmKxsVmwkFe14Vjqw=="],
 
     "@phreshos/core": ["@phreshos/core@0.1.29", "", {}, "sha512-zDzxkf+ETuesTjuNC2f/+kKiFkiPhhShFa2OROsPHRDRLC0PZybmAwdu35AmwEpvmORxOvtkXYImEa66bdTJ4A=="],
 

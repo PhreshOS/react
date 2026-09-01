@@ -1,5 +1,5 @@
 import { useCallback } from "react"
-import type { AskCapture, AskSubscriber, Cleanup } from "@phreshos/client"
+import type { AskCapture, AskSubscriber, Cleanup } from "@phreshos/core"
 import useEventResult from "./event-result.js"
 
 /** Any Endpoint traffic surface capable of subscribing to its outgoing questions. */

@@ -1,5 +1,5 @@
 import { useEffectEvent, useMemo, useSyncExternalStore } from "react"
-import type { Cleanup } from "@phreshos/client"
+import type { Cleanup } from "@phreshos/core"
 
 /** A persistent SDK registration consumed by the React adapter. */
 export type Connect<Message> = (receive: (message: Message) => void) => Cleanup

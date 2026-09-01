@@ -3,19 +3,16 @@ export {
   useParent,
   useProcess,
   useProgram,
-  type ContextProvision,
-  type ContextProvisionName,
+  type ContextSource,
   type ContextProviderProperties
 } from "./context-provider.js"
 
 export {
   default as SystemProvider,
-  usePointerPosition,
-  useDesktopSize,
+  useDesktopPointer,
+  useDesktopSurface,
   useDesktopPreferences,
   useSystemAppearance,
-  type SystemProvision,
-  type SystemProvisionName,
   type SystemProviderProperties
 } from "./system-provider.js"
 

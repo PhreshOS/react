@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react"
-import type { Process, Program } from "@phreshos/client"
+import type { Process, Program } from "@phreshos/core"
 import LiveState, { combineCleanups } from "./live-state.js"
 
 /** Mutable runtime state derived from one Program's reads and live events. */

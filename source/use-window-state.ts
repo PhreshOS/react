@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react"
-import type { Window, WindowState } from "@phreshos/client"
+import type { Window, WindowState } from "@phreshos/core"
 import LiveState, { combineCleanups } from "./live-state.js"
 
 /** Explicitly reads and follows one live Client Window while mounted. */

@@ -1,4 +1,4 @@
-import type { Cleanup } from "@phreshos/client"
+import type { Cleanup } from "@phreshos/core"
 
 const noError = Symbol("no-error")
 

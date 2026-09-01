@@ -1,4 +1,4 @@
-import type { Cleanup } from "@phreshos/client"
+import type { Cleanup } from "@phreshos/core"
 
 const unavailable = Symbol("unavailable")
 
