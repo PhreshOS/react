@@ -72,11 +72,15 @@ const sdk = await import("@phreshos/react")
 
 for (const name of [
   "ContextProvider",
+  "DesktopProvider",
   "SystemProvider",
-  "useDesktopPointer",
+  "useContext",
+  "useDesktop",
   "useDesktopPreferences",
   "useDesktopSurface",
+  "useEndpointState",
   "useSystemAppearance",
+  "useSystem",
   "useParent",
   "useProcess",
   "useProcessState",
@@ -103,14 +107,14 @@ assert.equal("useObserveAsks" in sdk, false)
   writeFileSync(
     join(consumer, "consumer.tsx"),
     `import type {
-  AppearanceSource,
-  DesktopPreferencesSource,
-  DesktopSurfaceSource,
-  Process,
-  Service
+  ClientContext,
+  Desktop,
+  Service,
+  System
 } from "@phreshos/core"
 import {
   ContextProvider,
+  DesktopProvider,
   SystemProvider,
   useDesktopPreferences,
   useDesktopSurface,
@@ -132,23 +136,19 @@ function Content() {
   return <span style={{ color: appearance.foreground[theme], padding: appearance.spacing.light }}>{desktop.size.width + Number(state?.clientExists) + Number(service?.exists)}</span>
 }
 
-declare const appearance: AppearanceSource
-declare const desktopPreferences: DesktopPreferencesSource
-declare const desktopSurface: DesktopSurfaceSource
-declare const process: Process
+declare const context: ClientContext
+declare const desktop: Desktop
+declare const system: System
 declare const runtimeService: Service
 
 const tree = (
-  <ContextProvider process={process} fallback={null}>
-    <SystemProvider
-      appearance={appearance}
-      desktopPreferences={desktopPreferences}
-      desktopSurface={desktopSurface}
-      fallback={null}
-    >
-      <Content />
-    </SystemProvider>
-  </ContextProvider>
+  <SystemProvider system={system} fallback={null}>
+    <DesktopProvider desktop={desktop} fallback={null}>
+      <ContextProvider context={context} fallback={null}>
+        <Content />
+      </ContextProvider>
+    </DesktopProvider>
+  </SystemProvider>
 )
 
 void tree

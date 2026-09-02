@@ -1,126 +1,68 @@
-import {
-  createContext,
-  createElement,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode
-} from "react"
-import type { Process, Program } from "@phreshos/core"
+import { createContext, createElement, useContext as useReactContext, useMemo, useSyncExternalStore, type ReactNode } from "react"
+import type { ClientContext, Process, Program } from "@phreshos/core"
+import LiveSnapshot from "./live-snapshot.js"
+import useProviderResolution from "./provider-resolution.js"
 
-const RuntimeContext = createContext<Partial<ContextValues> | null>(null)
+type ContextValue = Readonly<{
+  context: ClientContext
+  process: LiveSnapshot<Process>
+  program: LiveSnapshot<Program>
+  parent: LiveSnapshot<Process | null>
+}>
 
-/** Resolves only the runtime handles supplied by the surrounding runtime. */
-export default function ContextProvider({
-  children,
-  fallback = null,
-  parent,
-  process,
-  program
-}: ContextProviderProperties) {
-  const sources = useMemo<ContextSources>(() => ({ parent, process, program }), [parent, process, program])
-  const [resolution, setResolution] = useState<Resolution>({ status: "pending", sources })
+const CurrentContext = createContext<ContextValue | null>(null)
 
-  if (parent === undefined && process === undefined && program === undefined) {
-    throw new Error("ContextProvider requires at least one runtime handle")
-  }
+/** Provides one complete Client execution Context to a React tree. */
+export default function ContextProvider({ children, context, fallback = null }: ContextProviderProperties) {
+  const value = useMemo<ContextValue>(() => ({
+    context,
+    process: fixed(() => context.process()),
+    program: fixed(() => context.program()),
+    parent: fixed(() => context.parent())
+  }), [context])
 
-  useEffect(() => {
-    let active = true
+  const stores = useMemo(() => [value.process, value.program, value.parent] as const, [value])
+  const ready = useProviderResolution(stores)
 
-    void resolveSources(sources).then(value => {
-      if (active) setResolution({ status: "ready", sources, value })
-    }, error => {
-      if (active) setResolution({ status: "error", sources, error })
-    })
-
-    return () => { active = false }
-  }, [sources])
-
-  if (resolution.sources !== sources || resolution.status === "pending") return fallback
-  if (resolution.status === "error") throw resolution.error
-
-  return createElement(RuntimeContext.Provider, { value: resolution.value }, children)
+  return ready ? createElement(CurrentContext.Provider, { value }, children) : fallback
 }
 
-async function resolveSources(sources: ContextSources): Promise<Partial<ContextValues>> {
-  const entries = await Promise.all(contextNames.flatMap(name => {
-    const source = sources[name]
-    return source === undefined ? [] : [resolveSource(name, source as ContextSource<ContextValues[typeof name]>)]
-  }))
-
-  return Object.fromEntries(entries) as Partial<ContextValues>
+/** Returns the complete Client Context supplied by the nearest provider. */
+export function useContext(): ClientContext {
+  return useValue().context
 }
 
-async function resolveSource<Name extends ContextName>(
-  name: Name,
-  source: ContextSource<ContextValues[Name]>
-): Promise<readonly [Name, ContextValues[Name]]> {
-  const value = typeof source === "function" ? source() : source
-  return [name, await value]
-}
-
-/** Returns the current Program supplied by the nearest provider. */
+/** Returns the current Program once it resolves. */
 export function useProgram<Handle extends Program = Program>(): Handle {
-  return useProvided("program") as Handle
+  return useResolved(useValue().program) as Handle
 }
 
-/** Returns the current Process supplied by the nearest provider. */
+/** Returns the current Process once it resolves. */
 export function useProcess<Handle extends Process = Process>(): Handle {
-  return useProvided("process") as Handle
+  return useResolved(useValue().process) as Handle
 }
 
-/** Returns the current Process's supplied visible parent. */
+/** Returns the current Process parent once it resolves. */
 export function useParent<Handle extends Process = Process>(): Handle | null {
-  return useProvided("parent") as Handle | null
+  return useResolved(useValue().parent) as Handle | null
 }
 
-function useProvided<Name extends ContextName>(name: Name): ContextValues[Name] {
-  const context = useContext(RuntimeContext)
-
-  if (!context) throw new Error(`${hookNames[name]} must be used inside ContextProvider`)
-  if (!(name in context)) throw new Error(`${hookNames[name]} requires ContextProvider's ${name} prop`)
-
-  return context[name] as ContextValues[Name]
+function useResolved<Value>(store: LiveSnapshot<Value>) {
+  return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
 }
 
-const contextNames = ["program", "process", "parent"] as const
-
-const hookNames: Readonly<Record<ContextName, string>> = {
-  parent: "useParent",
-  process: "useProcess",
-  program: "useProgram"
+function useValue() {
+  const value = useReactContext(CurrentContext)
+  if (!value) throw new Error("useContext must be used inside ContextProvider")
+  return value
 }
 
-/** A stable handle or resolver supplied by one runtime integration. */
-export type ContextSource<Value> = Value | (() => Value | PromiseLike<Value>)
+function fixed<Value>(read: () => Promise<Value>) {
+  return new LiveSnapshot(read, () => () => undefined)
+}
 
-/** Properties accepted by ContextProvider. */
 export type ContextProviderProperties = Readonly<{
-  readonly children: ReactNode
-  readonly fallback?: ReactNode
-}> & AtLeastOne<ContextSources>
-
-type ContextSources = Readonly<{
-  readonly parent?: ContextSource<Process | null>
-  readonly process?: ContextSource<Process>
-  readonly program?: ContextSource<Program>
+  children: ReactNode
+  context: ClientContext
+  fallback?: ReactNode
 }>
-
-type ContextName = typeof contextNames[number]
-
-type ContextValues = Readonly<{
-  program: Program
-  process: Process
-  parent: Process | null
-}>
-
-type Resolution =
-  | Readonly<{ status: "pending", sources: ContextSources }>
-  | Readonly<{ status: "ready", sources: ContextSources, value: Partial<ContextValues> }>
-  | Readonly<{ status: "error", sources: ContextSources, error: unknown }>
-
-type AtLeastOne<Values> = {
-  [Name in keyof Values]-?: Required<Pick<Values, Name>> & Partial<Omit<Values, Name>>
-}[keyof Values]

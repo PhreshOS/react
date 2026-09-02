@@ -20,47 +20,45 @@ domain state.
 ## Providers
 
 ```tsx
-import { ContextProvider, SystemProvider } from "@phreshos/react"
+import { ContextProvider, DesktopProvider, SystemProvider } from "@phreshos/react"
 
-<SystemProvider
-  appearance={system.appearance}
-  desktopSurface={system.desktop.surface}
-  desktopPointer={system.desktop.pointer}
-  desktopPreferences={system.desktop.preferences}
->
-  <ContextProvider
-    program={() => context.program()}
-    process={() => context.process()}
-    parent={() => context.process().then(process => process.parent())}
-  >
-    {children}
-  </ContextProvider>
+<SystemProvider system={system}>
+  <DesktopProvider desktop={desktop}>
+    <ContextProvider context={context}>
+      {children}
+    </ContextProvider>
+  </DesktopProvider>
 </SystemProvider>
 ```
 
-Each provider accepts explicitly selected sources and resolves only those
-values. A provider requires at least one source; mounting it does not fetch an
-entire runtime implicitly.
+Each provider receives one complete Core contract. The three roots remain
+separate: global System, current Client Context, and Client Desktop.
 
 ## Hooks
 
 Context hooks expose the supplied handles:
 
+- `useContext()`
 - `useProgram()`
 - `useProcess()`
 - `useParent()`
 
-System hooks expose the supplied live snapshots:
+System hooks expose the System and its live Appearance:
 
+- `useSystem()`
 - `useSystemAppearance()`
+
+Desktop hooks expose the Desktop and its live state:
+
+- `useDesktop()`
 - `useDesktopSurface()`
-- `useDesktopPointer()`
 - `useDesktopPreferences()`
 
 State hooks compose one explicit read with future events:
 
 - `useProgramState()`
 - `useProcessState()`
+- `useEndpointState()`
 - `useServiceState()`
 - `useWindowState()`
 

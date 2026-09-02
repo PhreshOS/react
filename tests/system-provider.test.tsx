@@ -1,71 +1,73 @@
 import { act, render, waitFor } from "@testing-library/react"
-import type {
-  DesktopPreferences,
-  DesktopPreferencesSource,
-  DesktopSurfaceSnapshot,
-  DesktopSurfaceSource
-} from "@phreshos/core"
+import { standardAppearance, type Appearance, type Desktop, type DesktopPreferences, type DesktopSurfaceSnapshot, type System } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
-import SystemProvider, {
-  useDesktopPreferences,
-  useDesktopSurface
-} from "../source/system-provider.js"
+import SystemProvider, { useSystem, useSystemAppearance } from "../source/system-provider.js"
+import DesktopProvider, { useDesktop, useDesktopPreferences, useDesktopSurface } from "../source/desktop-provider.js"
 
-describe("SystemProvider", function () {
-  it("renders the fallback until an injected source resolves and follows updates", async function () {
-    const requested = deferred<DesktopPreferences>()
-    const changes = new Subject<DesktopPreferences>()
-    const source = {
-      snapshot: () => requested.promise,
-      subscribe: changes.subscribe
-    } as unknown as DesktopPreferencesSource
+describe("runtime providers", function () {
+  it("provides the complete System and follows Appearance", async function () {
+    const requested = deferred<Appearance>()
+    const changes = new Subject<Appearance>()
+    const system = {
+      appearance: { snapshot: () => requested.promise, subscribe: changes.subscribe }
+    } as unknown as System
 
     const rendered = render(
-      <SystemProvider desktopPreferences={source} fallback={<span>loading</span>}>
-        <Preferences />
+      <SystemProvider system={system} fallback={<span>loading</span>}>
+        <SystemValue />
       </SystemProvider>
     )
 
     expect(rendered.getByText("loading")).toBeTruthy()
+    await act(async () => requested.resolve(standardAppearance))
+    await waitFor(() => expect(rendered.getByText(`${standardAppearance.foreground.light}:true`)).toBeTruthy())
 
-    await act(async () => requested.resolve({ theme: "dark", animations: true }))
-    await waitFor(() => expect(rendered.getByText("dark:true")).toBeTruthy())
-
-    act(() => changes.emit({ theme: "light", animations: false }))
-    expect(rendered.getByText("light:false")).toBeTruthy()
-
-    rendered.unmount()
-    expect(changes.listenerCount).toBe(0)
+    act(() => changes.emit({ ...standardAppearance, foreground: { ...standardAppearance.foreground, light: "#000000" } }))
+    expect(rendered.getByText("#000000:true")).toBeTruthy()
   })
 
-  it("keeps independently supplied Desktop capabilities separate", async function () {
-    const changes = new Subject<DesktopSurfaceSnapshot>()
-    const source = {
-      snapshot: async () => ({ size: { width: 800, height: 600 } }),
-      subscribe: changes.subscribe
-    } as unknown as DesktopSurfaceSource
+  it("provides one Desktop and follows its surface and preferences", async function () {
+    const surfaceChanges = new Subject<DesktopSurfaceSnapshot>()
+    const preferenceChanges = new Subject<DesktopPreferences>()
+    const desktop = {
+      surface: {
+        snapshot: async () => ({ size: { width: 800, height: 600 } }),
+        subscribe: surfaceChanges.subscribe
+      },
+      preferences: {
+        snapshot: async () => ({ theme: "dark", animations: true }),
+        subscribe: preferenceChanges.subscribe
+      }
+    } as unknown as Desktop
 
     const rendered = render(
-      <SystemProvider desktopSurface={source}>
-        <Surface />
-      </SystemProvider>
+      <DesktopProvider desktop={desktop}>
+        <DesktopValue />
+      </DesktopProvider>
     )
 
-    await waitFor(() => expect(rendered.getByText("800×600")).toBeTruthy())
+    await waitFor(() => expect(rendered.getByText("800×600:dark:true")).toBeTruthy())
+    act(() => surfaceChanges.emit({ size: { width: 1024, height: 768 } }))
+    act(() => preferenceChanges.emit({ theme: "light", animations: false }))
+    expect(rendered.getByText("1024×768:light:true")).toBeTruthy()
 
-    act(() => changes.emit({ size: { width: 1024, height: 768 } }))
-    expect(rendered.getByText("1024×768")).toBeTruthy()
+    rendered.unmount()
+    expect(surfaceChanges.listenerCount).toBe(0)
+    expect(preferenceChanges.listenerCount).toBe(0)
   })
 })
 
-function Preferences() {
-  const preferences = useDesktopPreferences()
-  return <span>{preferences.theme}:{String(preferences.animations)}</span>
+function SystemValue() {
+  const system = useSystem()
+  const appearance = useSystemAppearance()
+  return <span>{appearance.foreground.light}:{String(Boolean(system))}</span>
 }
 
-function Surface() {
+function DesktopValue() {
+  const desktop = useDesktop()
   const { size } = useDesktopSurface()
-  return <span>{size.width}×{size.height}</span>
+  const preferences = useDesktopPreferences()
+  return <span>{size.width}×{size.height}:{preferences.theme}:{String(Boolean(desktop))}</span>
 }
 
 class Subject<Value> {

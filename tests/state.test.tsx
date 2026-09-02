@@ -1,7 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Process, Program, Service, Subscribable, Window } from "@phreshos/core"
+import type { Cleanup, Endpoint, Process, Program, Service, Subscribable, Window } from "@phreshos/core"
+import useEndpointState from "../source/use-endpoint-state.js"
 import useProcessState from "../source/use-process-state.js"
 import useProgramState from "../source/use-program-state.js"
 import useServiceState from "../source/use-service-state.js"
@@ -100,6 +101,23 @@ describe("explicit domain state hooks", function () {
 
     act(() => events.emit("exit", { status: "exited", code: 0, signal: null }))
     expect(hook.result.current).toEqual({ exited: true, serverExists: false, clientExists: false })
+  })
+
+  it("maintains Endpoint existence from lifecycle events", async function () {
+    const lifecycle = new Subject()
+    const endpoint = {
+      exists: async () => false,
+      lifecycle: { subscribe: lifecycle.subscribe }
+    } as unknown as Endpoint
+    const hook = renderHook(() => useEndpointState(endpoint))
+
+    await waitFor(() => expect(hook.result.current).toEqual({ exists: false }))
+
+    act(() => lifecycle.emit("start", undefined))
+    expect(hook.result.current).toEqual({ exists: true })
+
+    act(() => lifecycle.emit("stop", undefined))
+    expect(hook.result.current).toEqual({ exists: false })
   })
 
   it("combines Window reads and follows future Window events", async function () {

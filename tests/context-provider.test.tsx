@@ -1,14 +1,18 @@
 import { act, render, waitFor } from "@testing-library/react"
-import type { Process } from "@phreshos/core"
+import type { ClientContext, Process } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import ContextProvider, { useProcess } from "../source/context-provider.js"
 
 describe("ContextProvider", function () {
-  it("resolves only the runtime handles supplied through its props", async function () {
+  it("provides one Client Context and resolves its current Process", async function () {
     const requested = deferred<Process>()
     const process = { identity: "process-one" } as Process
     const rendered = render(
-      <ContextProvider process={() => requested.promise} fallback={<span>loading</span>}>
+      <ContextProvider context={{
+        process: () => requested.promise,
+        program: async () => ({}),
+        parent: async () => null
+      } as ClientContext} fallback={<span>loading</span>}>
         <CurrentProcess />
       </ContextProvider>
     )
