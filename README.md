@@ -2,9 +2,20 @@
 
 Runtime-neutral React adapters for PhreshOS contracts.
 
-The React SDK receives explicit Core handles and live sources. It does not
-initialize transport, import the Client SDK, access the browser, or define
-domain state.
+[Documentation](https://docs.phreshos.com/sdks/react) ·
+[Runtime model](https://docs.phreshos.com/runtime) ·
+[Source](https://github.com/PhreshOS/react)
+
+## Role
+
+The React SDK adapts explicitly supplied Core contracts and live sources to
+React providers and hooks. It does not initialize a transport, import the
+Client SDK, access the browser, define domain state, or render visual language.
+
+`SystemProvider`, `ContextProvider`, and `DesktopProvider` preserve the
+separation between the global System, current Client Context, and containing
+Desktop. State and subscription hooks preserve unresolved state and own only
+their React lifecycle.
 
 ## Installation
 
@@ -17,54 +28,22 @@ domain state.
 
 `@phreshos/core` and React are peer dependencies.
 
-## Providers
-
 ```tsx
-import { ContextProvider, DesktopProvider, SystemProvider } from "@phreshos/react"
+import {
+  ContextProvider,
+  DesktopProvider,
+  SystemProvider,
+} from "@phreshos/react"
 
 <SystemProvider system={system}>
   <DesktopProvider desktop={desktop}>
-    <ContextProvider context={context}>
-      {children}
-    </ContextProvider>
+    <ContextProvider context={context}>{children}</ContextProvider>
   </DesktopProvider>
 </SystemProvider>
 ```
 
-Each provider receives one complete Core contract. The three roots remain
-separate: global System, current Client Context, and Client Desktop.
-
-## Hooks
-
-Context hooks expose the supplied handles:
-
-- `useContext()`
-- `useProgram()`
-- `useProcess()`
-- `useParent()`
-
-System hooks expose the System and its live Appearance:
-
-- `useSystem()`
-- `useSystemAppearance()`
-
-Desktop hooks expose the Desktop and its live state:
-
-- `useDesktop()`
-- `useDesktopSurface()`
-- `useDesktopPreferences()`
-
-State hooks compose one explicit read with future events:
-
-- `useProgramState()`
-- `useProcessState()`
-- `useEndpointState()`
-- `useServiceState()`
-- `useWindowState()`
-
-`useSubscribe()`, `useSubscribeAsks()`, and `useSubscribeAnswers()` own
-their mounted registrations and clean them up on unmount. Unresolved initial
-reads remain `undefined`; the adapters do not invent fallback domain state.
+See [React SDK](https://docs.phreshos.com/sdks/react) for providers, state
+hooks, and subscription hooks.
 
 ## Development
 
@@ -73,13 +52,21 @@ bun install --frozen-lockfile
 bun run verify
 ```
 
-`verify` checks the contracts, tests the adapters in React, builds the package,
-and validates its public artifact.
+`verify` checks the contracts, tests the adapters, builds the package, and
+validates its published shape.
 
-## Repository boundary
+## Related repositories
 
-This repository owns React lifecycle adaptation only. Core owns the contracts,
-runtime SDKs provide the sources, and React UI owns visual components.
+- [`@phreshos/core`](https://github.com/PhreshOS/core) owns every contract
+  accepted by these adapters.
+- [`@phreshos/client`](https://github.com/PhreshOS/client) supplies Client
+  runtime values without becoming a dependency of this package.
+- [`@phreshos/react-ui`](https://github.com/PhreshOS/react-ui) owns reusable
+  visual components and Appearance interpretation.
+- [PhreshOS System](https://github.com/PhreshOS/system) composes these adapters
+  in the Desktop.
+
+## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository workflow and
 [SECURITY.md](SECURITY.md) for private vulnerability reporting.
