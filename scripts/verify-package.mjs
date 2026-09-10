@@ -9,6 +9,13 @@ import manifest from "../package.json" with { type: "json" }
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const temporary = mkdtempSync(join(tmpdir(), "phreshos-react-package-"))
 const cache = join(temporary, "npm-cache")
+const corePackage = process.env.PHRESHOS_CORE_PACKAGE ?? `@phreshos/core@${manifest.devDependencies["@phreshos/core"]}`
+
+assert.equal(
+  manifest.peerDependencies["@phreshos/core"],
+  manifest.devDependencies["@phreshos/core"],
+  "the published Core peer must match the verified Core dependency"
+)
 
 try {
   const output = execFileSync(
@@ -53,7 +60,7 @@ try {
       "--no-fund",
       "--no-package-lock",
       archive,
-      `@phreshos/core@${manifest.devDependencies["@phreshos/core"]}`,
+      corePackage,
       `react@${manifest.devDependencies.react}`,
       `@types/react@${manifest.devDependencies["@types/react"]}`
     ],

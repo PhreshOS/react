@@ -1,5 +1,5 @@
 import { act, render, waitFor } from "@testing-library/react"
-import { standardAppearance, type Appearance, type Desktop, type DesktopPreferences, type DesktopSurfaceSnapshot, type System } from "@phreshos/core"
+import { defaultAppearance, type Appearance, type Desktop, type DesktopPreferences, type DesktopSurfaceSnapshot, type System } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import SystemProvider, { useSystem, useSystemAppearance } from "../source/system-provider.js"
 import DesktopProvider, { useDesktop, useDesktopPreferences, useDesktopSurface } from "../source/desktop-provider.js"
@@ -19,10 +19,10 @@ describe("runtime providers", function () {
     )
 
     expect(rendered.getByText("loading")).toBeTruthy()
-    await act(async () => requested.resolve(standardAppearance))
-    await waitFor(() => expect(rendered.getByText(`${standardAppearance.foreground.light}:true`)).toBeTruthy())
+    await act(async () => requested.resolve(defaultAppearance))
+    await waitFor(() => expect(rendered.getByText(`${defaultAppearance.foreground.light}:true`)).toBeTruthy())
 
-    act(() => changes.emit({ ...standardAppearance, foreground: { ...standardAppearance.foreground, light: "#000000" } }))
+    act(() => changes.emit({ ...defaultAppearance, foreground: { ...defaultAppearance.foreground, light: "#000000" } }))
     expect(rendered.getByText("#000000:true")).toBeTruthy()
   })
 
