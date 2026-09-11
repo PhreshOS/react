@@ -72,35 +72,22 @@ describe("explicit domain state hooks", function () {
     expect(processEvents.listenerCount).toBe(0)
   })
 
-  it("maintains Process endpoint presence from lifecycle events", async function () {
+  it("maintains Process lifecycle state from Process events", async function () {
     const events = new Subject()
-    const serverLifecycle = new Subject()
-    const clientLifecycle = new Subject()
-    const server = { exists: async () => true, lifecycle: { subscribe: serverLifecycle.subscribe } }
-    const client = { exists: async () => true, lifecycle: { subscribe: clientLifecycle.subscribe } }
     const process = {
-      server,
-      client,
       exited: async () => false,
       subscribe: events.subscribe
     } as unknown as Process
 
     const hook = renderHook(() => useProcessState(process))
 
-    await waitFor(() => expect(hook.result.current).toEqual({
-      exited: false,
-      serverExists: true,
-      clientExists: true
-    }))
-
-    act(() => clientLifecycle.emit("stop", undefined))
-    expect(hook.result.current?.clientExists).toBe(false)
-
-    act(() => clientLifecycle.emit("start", undefined))
-    expect(hook.result.current?.clientExists).toBe(true)
+    await waitFor(() => expect(hook.result.current).toEqual({ exited: false }))
 
     act(() => events.emit("exit", { status: "exited", code: 0, signal: null }))
-    expect(hook.result.current).toEqual({ exited: true, serverExists: false, clientExists: false })
+    expect(hook.result.current).toEqual({ exited: true })
+
+    hook.unmount()
+    expect(events.listenerCount).toBe(0)
   })
 
   it("maintains Endpoint existence from lifecycle events", async function () {
