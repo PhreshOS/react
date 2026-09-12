@@ -6,17 +6,16 @@ import LiveState, { combineCleanups } from "./live-state.js"
 export default function useWindowState(window: Window): WindowState | undefined {
   const state = useMemo(() => new LiveState<WindowState>(
     async () => {
-      const [title, position, size, minimized, front, layer, location] = await Promise.all([
+      const [title, position, size, minimized, front, layer] = await Promise.all([
         window.title(),
         window.position(),
         window.size(),
         window.minimized(),
         window.front(),
-        window.layer(),
-        window.location()
+        window.layer()
       ])
 
-      return { title, position, size, minimized, front, layer, location }
+      return { title, position, size, minimized, front, layer }
     },
     reduce => combineCleanups(
       window.subscribe("move", position => reduce(current => ({ ...current, position }))),

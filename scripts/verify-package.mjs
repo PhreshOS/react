@@ -84,7 +84,7 @@ for (const name of [
   "useContext",
   "useDesktop",
   "useDesktopPreferences",
-  "useDesktopSurface",
+  "useDesktopViewport",
   "useEndpointState",
   "useSystemAppearance",
   "useSystem",
@@ -124,7 +124,7 @@ import {
   DesktopProvider,
   SystemProvider,
   useDesktopPreferences,
-  useDesktopSurface,
+  useDesktopViewport,
   useSystemAppearance,
   useProcess,
   useProcessState,
@@ -136,7 +136,7 @@ import { CurrentProvider } from "@phreshos/react"
 function Content() {
   const { theme } = useDesktopPreferences()
   const appearance = useSystemAppearance()
-  const desktop = useDesktopSurface()
+  const desktop = useDesktopViewport()
   const process = useProcess()
   const state = useProcessState(process)
   const service = useServiceState(runtimeService)

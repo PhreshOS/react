@@ -1,11 +1,11 @@
 import { createContext, createElement, useContext as useReactContext, useMemo, useSyncExternalStore, type ReactNode } from "react"
-import type { Desktop, DesktopPreferences, DesktopSurfaceSnapshot } from "@phreshos/core"
+import type { Desktop, DesktopPreferences, DesktopViewportSnapshot } from "@phreshos/core"
 import LiveSnapshot from "./live-snapshot.js"
 import useProviderResolution from "./provider-resolution.js"
 
 type DesktopValue = Readonly<{
   desktop: Desktop
-  surface: LiveSnapshot<DesktopSurfaceSnapshot>
+  viewport: LiveSnapshot<DesktopViewportSnapshot>
   preferences: LiveSnapshot<DesktopPreferences>
 }>
 
@@ -15,9 +15,9 @@ const DesktopContext = createContext<DesktopValue | null>(null)
 export default function DesktopProvider({ children, desktop, fallback = null }: DesktopProviderProperties) {
   const value = useMemo<DesktopValue>(() => ({
     desktop,
-    surface: new LiveSnapshot(
-      () => desktop.surface.snapshot(),
-      subscriber => desktop.surface.subscribe("resize", subscriber)
+    viewport: new LiveSnapshot(
+      () => desktop.viewport.snapshot(),
+      subscriber => desktop.viewport.subscribe("resize", subscriber)
     ),
     preferences: new LiveSnapshot(
       () => desktop.preferences.snapshot(),
@@ -25,7 +25,7 @@ export default function DesktopProvider({ children, desktop, fallback = null }: 
     )
   }), [desktop])
 
-  const stores = useMemo(() => [value.surface, value.preferences] as const, [value])
+  const stores = useMemo(() => [value.viewport, value.preferences] as const, [value])
   const ready = useProviderResolution(stores)
 
   return ready ? createElement(DesktopContext.Provider, { value }, children) : fallback
@@ -36,9 +36,9 @@ export function useDesktop(): Desktop {
   return useValue().desktop
 }
 
-/** Resolves and follows the current Desktop surface. */
-export function useDesktopSurface(): DesktopSurfaceSnapshot {
-  const store = useValue().surface
+/** Resolves and follows the current Desktop viewport. */
+export function useDesktopViewport(): DesktopViewportSnapshot {
+  const store = useValue().viewport
   return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
 }
 

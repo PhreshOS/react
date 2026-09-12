@@ -118,8 +118,7 @@ describe("explicit domain state hooks", function () {
       size: { width: 640, height: 480 },
       minimized: false,
       front: true,
-      layer: "window",
-      location: "./"
+      layer: "window"
     }))
 
     act(() => events.emit("move", { x: 30, y: 40 }))
@@ -218,7 +217,6 @@ function windowFixture(events: Subject): Window {
     minimized: async () => false,
     front: async () => true,
     layer: async () => "window",
-    location: async () => "./",
     surface: {
       set: async () => undefined,
       remove: async () => undefined

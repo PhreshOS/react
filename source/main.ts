@@ -17,7 +17,7 @@ export {
 export {
   default as DesktopProvider,
   useDesktop,
-  useDesktopSurface,
+  useDesktopViewport,
   useDesktopPreferences,
   type DesktopProviderProperties
 } from "./desktop-provider.js"

@@ -1,8 +1,8 @@
 import { act, render, waitFor } from "@testing-library/react"
-import { defaultAppearance, type Appearance, type Desktop, type DesktopPreferences, type DesktopSurfaceSnapshot, type System } from "@phreshos/core"
+import { defaultAppearance, type Appearance, type Desktop, type DesktopPreferences, type DesktopViewportSnapshot, type System } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import SystemProvider, { useSystem, useSystemAppearance } from "../source/system-provider.js"
-import DesktopProvider, { useDesktop, useDesktopPreferences, useDesktopSurface } from "../source/desktop-provider.js"
+import DesktopProvider, { useDesktop, useDesktopPreferences, useDesktopViewport } from "../source/desktop-provider.js"
 
 describe("runtime providers", function () {
   it("provides the complete System and follows Appearance", async function () {
@@ -32,13 +32,13 @@ describe("runtime providers", function () {
     expect(rendered.getByText("#000000:true")).toBeTruthy()
   })
 
-  it("provides one Desktop and follows its surface and preferences", async function () {
-    const surfaceChanges = new Subject<DesktopSurfaceSnapshot>()
+  it("provides one Desktop and follows its viewport and preferences", async function () {
+    const viewportChanges = new Subject<DesktopViewportSnapshot>()
     const preferenceChanges = new Subject<DesktopPreferences>()
     const desktop = {
-      surface: {
+      viewport: {
         snapshot: async () => ({ size: { width: 800, height: 600 } }),
-        subscribe: surfaceChanges.subscribe
+        subscribe: viewportChanges.subscribe
       },
       preferences: {
         snapshot: async () => ({ theme: "dark", animations: true }),
@@ -53,12 +53,12 @@ describe("runtime providers", function () {
     )
 
     await waitFor(() => expect(rendered.getByText("800×600:dark:true")).toBeTruthy())
-    act(() => surfaceChanges.emit({ size: { width: 1024, height: 768 } }))
+    act(() => viewportChanges.emit({ size: { width: 1024, height: 768 } }))
     act(() => preferenceChanges.emit({ theme: "light", animations: false }))
     expect(rendered.getByText("1024×768:light:true")).toBeTruthy()
 
     rendered.unmount()
-    expect(surfaceChanges.listenerCount).toBe(0)
+    expect(viewportChanges.listenerCount).toBe(0)
     expect(preferenceChanges.listenerCount).toBe(0)
   })
 })
@@ -71,7 +71,7 @@ function SystemValue() {
 
 function DesktopValue() {
   const desktop = useDesktop()
-  const { size } = useDesktopSurface()
+  const { size } = useDesktopViewport()
   const preferences = useDesktopPreferences()
   return <span>{size.width}×{size.height}:{preferences.theme}:{String(Boolean(desktop))}</span>
 }
