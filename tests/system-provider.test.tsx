@@ -20,13 +20,13 @@ describe("runtime providers", function () {
 
     expect(rendered.getByText("loading")).toBeTruthy()
     await act(async () => requested.resolve(defaultAppearance))
-    await waitFor(() => expect(rendered.getByText(`${defaultAppearance.colors.foreground.light}:true`)).toBeTruthy())
+    await waitFor(() => expect(rendered.getByText(`${defaultAppearance.colors.light.foreground}:true`)).toBeTruthy())
 
     act(() => changes.emit({
       ...defaultAppearance,
       colors: {
         ...defaultAppearance.colors,
-        foreground: { ...defaultAppearance.colors.foreground, light: "#000000" }
+        light: { ...defaultAppearance.colors.light, foreground: "#000000" }
       }
     }))
     expect(rendered.getByText("#000000:true")).toBeTruthy()
@@ -66,7 +66,7 @@ describe("runtime providers", function () {
 function SystemValue() {
   const system = useSystem()
   const appearance = useSystemAppearance()
-  return <span>{appearance.colors.foreground.light}:{String(Boolean(system))}</span>
+  return <span>{appearance.colors.light.foreground}:{String(Boolean(system))}</span>
 }
 
 function DesktopValue() {

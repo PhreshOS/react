@@ -140,7 +140,7 @@ function Content() {
   const process = useProcess()
   const state = useProcessState(process)
   const service = useServiceState(runtimeService)
-  return <span style={{ color: appearance.colors.foreground[theme], padding: appearance.spacing.light }}>{desktop.size.width + Number(state?.exited) + Number(service?.exists)}</span>
+  return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{desktop.size.width + Number(state?.exited) + Number(service?.exists)}</span>
 }
 
 declare const context: ClientContext
