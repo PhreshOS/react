@@ -26,7 +26,7 @@ their React lifecycle.
 | Bun | `bun add @phreshos/react` |
 | Yarn | `yarn add @phreshos/react` |
 
-`@phreshos/core` and React are peer dependencies.
+`@phreshos/core` and `react` are peer dependencies.
 
 ```tsx
 import {
