@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Endpoint, Process, Program, Service, Subscribable, Window } from "@phreshos/core"
+import type { Cleanup, Endpoint, Process, Program, Service, Subscribable, Window, WindowState } from "@phreshos/core"
 import useEndpointState from "../source/use-endpoint-state.js"
 import useProcessState from "../source/use-process-state.js"
 import useProgramState from "../source/use-program-state.js"
@@ -117,6 +117,7 @@ describe("explicit domain state hooks", function () {
       position: { x: 10, y: 20 },
       size: { width: 640, height: 480 },
       minimized: false,
+      maximized: false,
       front: true,
       layer: "window"
     }))
@@ -126,6 +127,12 @@ describe("explicit domain state hooks", function () {
 
     expect(hook.result.current?.position).toEqual({ x: 30, y: 40 })
     expect(hook.result.current?.title).toBe("Changed")
+
+    act(() => events.emit("maximize", true))
+    act(() => events.emit("minimize", true))
+    expect(hook.result.current?.maximized).toBe(true)
+    expect(hook.result.current?.minimized).toBe(true)
+    expect(hook.result.current?.position).toEqual({ x: 30, y: 40 })
   })
 
   it("subscribes before the service snapshot and preserves intervening lifecycle events", async function () {
@@ -210,19 +217,29 @@ type ErrorBoundaryProperties = Readonly<{
 }>
 
 function windowFixture(events: Subject): Window {
-  return {
+  const reads = {
     title: async () => "Initial",
     position: async () => ({ x: 10, y: 20 }),
     size: async () => ({ width: 640, height: 480 }),
     minimized: async () => false,
+    maximized: async () => false,
     front: async () => true,
-    layer: async () => "window",
-    surface: {
-      set: async () => undefined,
-      remove: async () => undefined
-    },
-    subscribe: events.subscribe
-  } as unknown as Window
+    layer: async () => "window"
+  } satisfies { [Key in keyof WindowState]: Window[Key] }
+
+  return {
+    ...reads,
+    move: async () => undefined,
+    resize: async () => undefined,
+    setGeometry: async () => undefined,
+    minimize: async () => undefined,
+    maximize: async () => undefined,
+    changeTitle: async () => undefined,
+    raise: async () => undefined,
+    wait: async () => { throw new Error("Unexpected wait in state hook") },
+    events: async function* () { throw new Error("Unexpected iterator in state hook") },
+    subscribe: events.subscribe as Window["subscribe"]
+  } satisfies Window
 }
 
 type Listener = (message: unknown) => unknown
