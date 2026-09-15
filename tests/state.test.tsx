@@ -1,10 +1,12 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Endpoint, Process, Program, Service, Subscribable, Window, WindowState } from "@phreshos/core"
+import type { Cleanup, Connection, Endpoint, Process, Program, Service, Session, Subscribable, Window, WindowState } from "@phreshos/core"
+import useConnectionState from "../source/use-connection-state.js"
 import useEndpointState from "../source/use-endpoint-state.js"
 import useProcessState from "../source/use-process-state.js"
 import useProgramState from "../source/use-program-state.js"
+import useSessionState from "../source/use-session-state.js"
 import useServiceState from "../source/use-service-state.js"
 import useWindowState from "../source/use-window-state.js"
 import useSubscribe from "../source/use-subscribe.js"
@@ -27,21 +29,14 @@ describe("explicit domain state hooks", function () {
 
   it("subscribes before the Program read and preserves intervening lifecycle events", async function () {
     const events = new Subject()
-    const processEvents = new Subject()
     const processes = deferred<Process[]>()
     const created = {} as Process
     const order: string[] = []
     const program = {
       installed: async () => true,
-      process: {
-        list: () => {
-          order.push("read")
-          return processes.promise
-        },
-        subscribe: (event: string, listener: Listener) => {
-          order.push(`subscribe:process:${event}`)
-          return processEvents.subscribe(event, listener)
-        }
+      processes: () => {
+        order.push("read")
+        return processes.promise
       },
       subscribe: (event: string, listener: Listener) => {
         order.push(`subscribe:${event}`)
@@ -53,23 +48,22 @@ describe("explicit domain state hooks", function () {
 
     expect(hook.result.current).toBeUndefined()
     expect(order.slice(0, 3)).toEqual([
-      "subscribe:process:create",
-      "subscribe:process:exit",
+      "subscribe:processCreate",
+      "subscribe:processExit",
       "subscribe:uninstall"
     ])
     expect(order[3]).toBe("read")
 
-    act(() => processEvents.emit("create", created))
+    act(() => events.emit("processCreate", created))
     processes.resolve([])
 
     await waitFor(() => expect(hook.result.current).toEqual({ installed: true, processes: [created] }))
 
-    act(() => events.emit("uninstall", false))
+    act(() => events.emit("uninstall", { purge: false }))
     expect(hook.result.current?.installed).toBe(false)
 
     hook.unmount()
     expect(events.listenerCount).toBe(0)
-    expect(processEvents.listenerCount).toBe(0)
   })
 
   it("maintains Process lifecycle state from Process events", async function () {
@@ -85,6 +79,55 @@ describe("explicit domain state hooks", function () {
 
     act(() => events.emit("exit", { status: "exited", code: 0, signal: null }))
     expect(hook.result.current).toEqual({ exited: true })
+
+    hook.unmount()
+    expect(events.listenerCount).toBe(0)
+  })
+
+  it("maintains Connection authorization and terminal state", async function () {
+    const events = new Subject()
+    const initial = {} as Session
+    const replacement = {} as Session
+    const connection = {
+      connected: async () => true,
+      session: async () => initial,
+      subscribe: events.subscribe
+    } as unknown as Connection
+    const hook = renderHook(() => useConnectionState(connection))
+
+    await waitFor(() => expect(hook.result.current).toEqual({ connected: true, session: initial }))
+
+    act(() => events.emit("sessionChange", replacement))
+    expect(hook.result.current).toEqual({ connected: true, session: replacement })
+
+    act(() => events.emit("disconnect", undefined))
+    expect(hook.result.current).toEqual({ connected: false, session: null })
+
+    hook.unmount()
+    expect(events.listenerCount).toBe(0)
+  })
+
+  it("maintains Session connections and terminal state", async function () {
+    const events = new Subject()
+    const first = {} as Connection
+    const second = {} as Connection
+    const session = {
+      valid: async () => true,
+      connections: async () => [first],
+      subscribe: events.subscribe
+    } as unknown as Session
+    const hook = renderHook(() => useSessionState(session))
+
+    await waitFor(() => expect(hook.result.current).toEqual({ valid: true, connections: [first] }))
+
+    act(() => events.emit("connectionAttach", second))
+    expect(hook.result.current).toEqual({ valid: true, connections: [first, second] })
+
+    act(() => events.emit("connectionDetach", first))
+    expect(hook.result.current).toEqual({ valid: true, connections: [second] })
+
+    act(() => events.emit("end", { reason: "signedOut" }))
+    expect(hook.result.current).toEqual({ valid: false, connections: [] })
 
     hook.unmount()
     expect(events.listenerCount).toBe(0)

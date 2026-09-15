@@ -14,14 +14,14 @@ export default function useProgramState(program: Program): ProgramState | undefi
     async () => {
       const [installed, processes] = await Promise.all([
         program.installed(),
-        program.process.list()
+        program.processes()
       ])
 
       return { installed, processes }
     },
     reduce => combineCleanups(
-      program.process.subscribe("create", process => reduce(current => addProcess(current, process as Process))),
-      program.process.subscribe("exit", ({ process }) => reduce(current => removeProcess(current, process as Process))),
+      program.subscribe("processCreate", process => reduce(current => addProcess(current, process))),
+      program.subscribe("processExit", ({ process }) => reduce(current => removeProcess(current, process))),
       program.subscribe("uninstall", () => reduce(current => current.installed ? { ...current, installed: false } : current))
     )
   ), [program])

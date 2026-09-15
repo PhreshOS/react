@@ -1,8 +1,8 @@
 import { act, render, waitFor } from "@testing-library/react"
-import { defaultAppearance, type Appearance, type Desktop, type DesktopPreferences, type DesktopViewportSnapshot, type System } from "@phreshos/core"
+import { defaultAppearance, type Appearance, type Connection, type Desktop, type DesktopPreferences, type DesktopViewportSnapshot, type System } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import SystemProvider, { useSystem, useSystemAppearance } from "../source/system-provider.js"
-import DesktopProvider, { useDesktop, useDesktopPreferences, useDesktopViewport } from "../source/desktop-provider.js"
+import DesktopProvider, { useDesktop, useDesktopConnection, useDesktopPreferences, useDesktopViewport } from "../source/desktop-provider.js"
 
 describe("runtime providers", function () {
   it("provides the complete System and follows Appearance", async function () {
@@ -61,6 +61,33 @@ describe("runtime providers", function () {
     expect(viewportChanges.listenerCount).toBe(0)
     expect(preferenceChanges.listenerCount).toBe(0)
   })
+
+  it("resolves the Desktop Connection only when its hook is used", async function () {
+    const connection = { identity: "connection-one" } as Connection
+    let reads = 0
+    const desktop = {
+      connection: async () => {
+        reads += 1
+        return connection
+      },
+      viewport: {
+        snapshot: async () => ({ size: { width: 800, height: 600 } }),
+        subscribe: () => () => undefined
+      },
+      preferences: {
+        snapshot: async () => ({ theme: "dark", animations: true }),
+        subscribe: () => () => undefined
+      }
+    } as unknown as Desktop
+    const rendered = render(
+      <DesktopProvider desktop={desktop}>
+        <DesktopConnection />
+      </DesktopProvider>
+    )
+
+    await waitFor(() => expect(rendered.getByText("connection-one")).toBeTruthy())
+    expect(reads).toBe(1)
+  })
 })
 
 function SystemValue() {
@@ -74,6 +101,10 @@ function DesktopValue() {
   const { size } = useDesktopViewport()
   const preferences = useDesktopPreferences()
   return <span>{size.width}×{size.height}:{preferences.theme}:{String(Boolean(desktop))}</span>
+}
+
+function DesktopConnection() {
+  return <span>{useDesktopConnection()?.identity ?? "loading"}</span>
 }
 
 class Subject<Value> {

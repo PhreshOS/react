@@ -1,6 +1,7 @@
 import { createContext, createElement, useContext as useReactContext, useMemo, useSyncExternalStore, type ReactNode } from "react"
-import type { Desktop, DesktopPreferences, DesktopViewportSnapshot } from "@phreshos/core"
+import type { Connection, Desktop, DesktopPreferences, DesktopViewportSnapshot } from "@phreshos/core"
 import LiveSnapshot from "./live-snapshot.js"
+import LiveState from "./live-state.js"
 import useProviderResolution from "./provider-resolution.js"
 
 type DesktopValue = Readonly<{
@@ -46,6 +47,17 @@ export function useDesktopViewport(): DesktopViewportSnapshot {
 export function useDesktopPreferences(): DesktopPreferences {
   const store = useValue().preferences
   return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
+}
+
+/** Resolves the browser Connection carrying this Desktop when explicitly used. */
+export function useDesktopConnection(): Connection | undefined {
+  const desktop = useDesktop()
+  const state = useMemo(() => new LiveState(
+    () => desktop.connection(),
+    () => () => undefined
+  ), [desktop])
+
+  return useSyncExternalStore(state.subscribe, state.snapshot, state.snapshot)
 }
 
 function useValue() {
