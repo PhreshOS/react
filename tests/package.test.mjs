@@ -12,6 +12,7 @@ test("package contract", async () => {
   const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..")
   const temporary = mkdtempSync(join(tmpdir(), "phreshos-react-package-"))
   const cache = join(temporary, "npm-cache")
+  const coreCandidate = process.env.PHRESHOS_CORE_PACKAGE
   const corePackage = `@phreshos/core@${manifest.devDependencies["@phreshos/core"]}`
 
   assert.equal(
@@ -63,7 +64,7 @@ test("package contract", async () => {
         "--no-fund",
         "--no-package-lock",
         archive,
-        corePackage,
+        coreCandidate ?? corePackage,
         `react@${manifest.devDependencies.react}`,
         `@types/react@${manifest.devDependencies["@types/react"]}`
       ],
@@ -137,13 +138,13 @@ test("package contract", async () => {
   import { CurrentProvider } from "@phreshos/react"
 
   function Content() {
-    const { theme } = useDesktopPreferences()
+    const { theme, scale } = useDesktopPreferences()
     const appearance = useSystemAppearance()
     const desktop = useDesktopViewport()
     const process = useProcess()
     const state = useProcessState(process)
     const service = useServiceState(runtimeService)
-    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{desktop.size.width + Number(state?.exited) + Number(service?.exists)}</span>
+    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{desktop.size.width + scale + Number(state?.exited) + Number(service?.exists)}</span>
   }
 
   declare const context: ClientContext

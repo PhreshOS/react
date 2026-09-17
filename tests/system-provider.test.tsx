@@ -41,7 +41,7 @@ describe("runtime providers", function () {
         subscribe: viewportChanges.subscribe
       },
       preferences: {
-        snapshot: async () => ({ theme: "dark", animations: true }),
+        snapshot: async () => ({ theme: "dark", animations: true, scale: 1 }),
         subscribe: preferenceChanges.subscribe
       }
     } as unknown as Desktop
@@ -52,10 +52,10 @@ describe("runtime providers", function () {
       </DesktopProvider>
     )
 
-    await waitFor(() => expect(rendered.getByText("800×600:dark:true")).toBeTruthy())
+    await waitFor(() => expect(rendered.getByText("800×600:dark:1:true")).toBeTruthy())
     act(() => viewportChanges.emit({ size: { width: 1024, height: 768 } }))
-    act(() => preferenceChanges.emit({ theme: "light", animations: false }))
-    expect(rendered.getByText("1024×768:light:true")).toBeTruthy()
+    act(() => preferenceChanges.emit({ theme: "light", animations: false, scale: 1.25 }))
+    expect(rendered.getByText("1024×768:light:1.25:true")).toBeTruthy()
 
     rendered.unmount()
     expect(viewportChanges.listenerCount).toBe(0)
@@ -75,7 +75,7 @@ describe("runtime providers", function () {
         subscribe: () => () => undefined
       },
       preferences: {
-        snapshot: async () => ({ theme: "dark", animations: true }),
+        snapshot: async () => ({ theme: "dark", animations: true, scale: 1 }),
         subscribe: () => () => undefined
       }
     } as unknown as Desktop
@@ -100,7 +100,7 @@ function DesktopValue() {
   const desktop = useDesktop()
   const { size } = useDesktopViewport()
   const preferences = useDesktopPreferences()
-  return <span>{size.width}×{size.height}:{preferences.theme}:{String(Boolean(desktop))}</span>
+  return <span>{size.width}×{size.height}:{preferences.theme}:{preferences.scale}:{String(Boolean(desktop))}</span>
 }
 
 function DesktopConnection() {
