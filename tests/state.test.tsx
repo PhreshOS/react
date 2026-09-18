@@ -157,6 +157,7 @@ describe("explicit domain state hooks", function () {
 
     await waitFor(() => expect(hook.result.current).toEqual({
       title: "Initial",
+      header: true,
       position: { x: 10, y: 20 },
       size: { width: 640, height: 480 },
       minimized: false,
@@ -167,9 +168,11 @@ describe("explicit domain state hooks", function () {
 
     act(() => events.emit("move", { x: 30, y: 40 }))
     act(() => events.emit("changeTitle", "Changed"))
+    act(() => events.emit("changeHeader", false))
 
     expect(hook.result.current?.position).toEqual({ x: 30, y: 40 })
     expect(hook.result.current?.title).toBe("Changed")
+    expect(hook.result.current?.header).toBe(false)
 
     act(() => events.emit("maximize", true))
     act(() => events.emit("minimize", true))
@@ -262,6 +265,7 @@ type ErrorBoundaryProperties = Readonly<{
 function windowFixture(events: Subject): Window {
   const reads = {
     title: async () => "Initial",
+    header: async () => true,
     position: async () => ({ x: 10, y: 20 }),
     size: async () => ({ width: 640, height: 480 }),
     minimized: async () => false,
@@ -278,6 +282,7 @@ function windowFixture(events: Subject): Window {
     minimize: async () => undefined,
     maximize: async () => undefined,
     changeTitle: async () => undefined,
+    changeHeader: async () => undefined,
     raise: async () => undefined,
     wait: async () => { throw new Error("Unexpected wait in state hook") },
     events: async function* () { throw new Error("Unexpected iterator in state hook") },

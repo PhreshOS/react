@@ -6,8 +6,9 @@ import LiveState, { combineCleanups } from "./live-state.js"
 export default function useWindowState(window: Window): WindowState | undefined {
   const state = useMemo(() => new LiveState<WindowState>(
     async () => {
-      const [title, position, size, minimized, maximized, front, layer] = await Promise.all([
+      const [title, header, position, size, minimized, maximized, front, layer] = await Promise.all([
         window.title(),
+        window.header(),
         window.position(),
         window.size(),
         window.minimized(),
@@ -16,7 +17,7 @@ export default function useWindowState(window: Window): WindowState | undefined 
         window.layer()
       ])
 
-      return { title, position, size, minimized, maximized, front, layer }
+      return { title, header, position, size, minimized, maximized, front, layer }
     },
     reduce => combineCleanups(
       window.subscribe("move", position => reduce(current => ({ ...current, position }))),
@@ -24,6 +25,7 @@ export default function useWindowState(window: Window): WindowState | undefined 
       window.subscribe("minimize", minimized => reduce(current => ({ ...current, minimized }))),
       window.subscribe("maximize", maximized => reduce(current => ({ ...current, maximized }))),
       window.subscribe("changeTitle", title => reduce(current => ({ ...current, title }))),
+      window.subscribe("changeHeader", header => reduce(current => ({ ...current, header }))),
       window.subscribe("front", front => reduce(current => ({ ...current, front })))
     )
   ), [window])
