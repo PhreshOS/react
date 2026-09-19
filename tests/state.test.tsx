@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Connection, Endpoint, Process, Program, Service, Session, Subscribable, Window, WindowState } from "@phreshos/core"
+import type { Cleanup, Connection, Endpoint, Process, Program, Service, Session, Subscribable, Window } from "@phreshos/core"
 import useConnectionState from "../source/use-connection-state.js"
 import useEndpointState from "../source/use-endpoint-state.js"
 import useProcessState from "../source/use-process-state.js"
@@ -133,21 +133,21 @@ describe("explicit domain state hooks", function () {
     expect(events.listenerCount).toBe(0)
   })
 
-  it("maintains Endpoint existence from lifecycle events", async function () {
+  it("maintains Endpoint execution state from lifecycle events", async function () {
     const lifecycle = new Subject()
     const endpoint = {
-      exists: async () => false,
+      running: async () => false,
       lifecycle: { subscribe: lifecycle.subscribe }
     } as unknown as Endpoint
     const hook = renderHook(() => useEndpointState(endpoint))
 
-    await waitFor(() => expect(hook.result.current).toEqual({ exists: false }))
+    await waitFor(() => expect(hook.result.current).toEqual({ running: false }))
 
     act(() => lifecycle.emit("start", undefined))
-    expect(hook.result.current).toEqual({ exists: true })
+    expect(hook.result.current).toEqual({ running: true })
 
     act(() => lifecycle.emit("stop", undefined))
-    expect(hook.result.current).toEqual({ exists: false })
+    expect(hook.result.current).toEqual({ running: false })
   })
 
   it("combines Window reads and follows future Window events", async function () {
@@ -158,6 +158,8 @@ describe("explicit domain state hooks", function () {
     await waitFor(() => expect(hook.result.current).toEqual({
       title: "Initial",
       header: true,
+      frame: true,
+      transaction: false,
       position: { x: 10, y: 20 },
       size: { width: 640, height: 480 },
       minimized: false,
@@ -266,13 +268,15 @@ function windowFixture(events: Subject): Window {
   const reads = {
     title: async () => "Initial",
     header: async () => true,
+    frame: async () => true,
+    openingTransaction: async () => false,
     position: async () => ({ x: 10, y: 20 }),
     size: async () => ({ width: 640, height: 480 }),
     minimized: async () => false,
     maximized: async () => false,
     front: async () => true,
-    layer: async () => "window"
-  } satisfies { [Key in keyof WindowState]: Window[Key] }
+    layer: async () => "window" as const
+  }
 
   return {
     ...reads,
@@ -283,6 +287,8 @@ function windowFixture(events: Subject): Window {
     maximize: async () => undefined,
     changeTitle: async () => undefined,
     changeHeader: async () => undefined,
+    changeFrame: async () => undefined,
+    changeOpeningTransaction: async () => undefined,
     raise: async () => undefined,
     wait: async () => { throw new Error("Unexpected wait in state hook") },
     events: async function* () { throw new Error("Unexpected iterator in state hook") },
