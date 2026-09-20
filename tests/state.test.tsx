@@ -188,7 +188,7 @@ describe("explicit domain state hooks", function () {
     const snapshot = deferred<boolean>()
     const order: string[] = []
     const service = {
-      exists: () => {
+      available: () => {
         order.push("read")
         return snapshot.promise
       },
@@ -203,15 +203,15 @@ describe("explicit domain state hooks", function () {
     const hook = renderHook(() => useServiceState(service))
 
     expect(hook.result.current).toBeUndefined()
-    expect(order).toEqual(["subscribe:start", "subscribe:stop", "read"])
+    expect(order).toEqual(["subscribe:available", "subscribe:unavailable", "read"])
 
-    act(() => events.emit("start", undefined))
+    act(() => events.emit("available", undefined))
     snapshot.resolve(true)
 
-    await waitFor(() => expect(hook.result.current).toEqual({ exists: true }))
+    await waitFor(() => expect(hook.result.current).toEqual({ available: true }))
 
-    act(() => events.emit("stop", undefined))
-    expect(hook.result.current).toEqual({ exists: false })
+    act(() => events.emit("unavailable", undefined))
+    expect(hook.result.current).toEqual({ available: false })
 
     hook.unmount()
     expect(events.listenerCount).toBe(0)
@@ -269,7 +269,7 @@ function windowFixture(events: Subject): Window {
     title: async () => "Initial",
     header: async () => true,
     frame: async () => true,
-    openingTransaction: async () => false,
+    transaction: async () => false,
     position: async () => ({ x: 10, y: 20 }),
     size: async () => ({ width: 640, height: 480 }),
     minimized: async () => false,
@@ -285,10 +285,10 @@ function windowFixture(events: Subject): Window {
     setGeometry: async () => undefined,
     minimize: async () => undefined,
     maximize: async () => undefined,
-    changeTitle: async () => undefined,
-    changeHeader: async () => undefined,
-    changeFrame: async () => undefined,
-    changeOpeningTransaction: async () => undefined,
+    setTitle: async () => undefined,
+    setHeader: async () => undefined,
+    setFrame: async () => undefined,
+    setTransaction: async () => undefined,
     raise: async () => undefined,
     wait: async () => { throw new Error("Unexpected wait in state hook") },
     events: async function* () { throw new Error("Unexpected iterator in state hook") },

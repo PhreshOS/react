@@ -10,7 +10,7 @@ export default function useWindowState(window: Window): WindowState | undefined 
         window.title(),
         window.header(),
         window.frame(),
-        window.openingTransaction(),
+        window.transaction(),
         window.position(),
         window.size(),
         window.minimized(),
@@ -29,6 +29,7 @@ export default function useWindowState(window: Window): WindowState | undefined 
       window.subscribe("changeTitle", title => reduce(current => ({ ...current, title }))),
       window.subscribe("changeHeader", header => reduce(current => ({ ...current, header }))),
       window.subscribe("changeFrame", frame => reduce(current => ({ ...current, frame }))),
+      window.subscribe("changeTransaction", transaction => reduce(current => ({ ...current, transaction }))),
       window.subscribe("front", front => reduce(current => ({ ...current, front })))
     )
   ), [window])

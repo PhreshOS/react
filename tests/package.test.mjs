@@ -144,7 +144,7 @@ test("package contract", async () => {
     const process = useProcess()
     const state = useProcessState(process)
     const service = useServiceState(runtimeService)
-    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{desktop.size.width + scale + Number(state?.exited) + Number(service?.exists)}</span>
+    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{desktop.size.width + scale + Number(state?.exited) + Number(service?.available)}</span>
   }
 
   declare const context: ClientContext
