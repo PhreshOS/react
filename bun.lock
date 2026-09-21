@@ -53,7 +53,7 @@
 
     "@oxc-project/types": ["@oxc-project/types@0.144.0", "", {}, "sha512-nuhZIOLuI6TFQ32I/WnUx+SCPY7SdSKwgnFHydAuoS1+Z4BRcaP+RRJmGzl9lw+0OFF7UmaESf7KQRXaNLHypg=="],
 
-    "@phreshos/core": ["@phreshos/core@0.1.55", "", { "dependencies": { "zod": "^4.6.5" } }, "sha512-xY957bQO7+/8syaaHhlWThouRU7QDzaL5HWdcV30JbuKCn9GBSkWFwanMFEIB/PQmbbD+xswFNGuXKU295GxpQ=="],
+    "@phreshos/core": ["@phreshos/core@0.1.56", "", { "dependencies": { "zod": "^4.6.5" } }, "sha512-X5JphvijFBfhzo7JplkrIra/61dXVQFQ2Y1tzpGFHycvHA3L7g6D9FriiBZcmDFk5RzohivYzJGpXq1tPeXDQQ=="],
 
     "@rolldown/binding-android-arm64": ["@rolldown/binding-android-arm64@1.2.4", "", { "os": "android", "cpu": "arm64" }, "sha512-jHC2cnyKz5xU2fhECtFl8OZ83cYNt13GZQD+0uMJ/X3o+ijmd56okHhTUwxVSHPx1IRVIJEZ1/1pPzeLCU6XKA=="],
 
