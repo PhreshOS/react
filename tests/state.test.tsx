@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Connection, Endpoint, Process, Program, Service, Session, Subscribable, Window, WindowPresentation } from "@phreshos/core"
+import type { Cleanup, Connection, Endpoint, Process, Program, Service, Session, Subscribable, Window } from "@phreshos/core"
 import useConnectionState from "../source/use-connection-state.js"
 import useEndpointState from "../source/use-endpoint-state.js"
 import useProcessState from "../source/use-process-state.js"
@@ -9,7 +9,6 @@ import useProgramState from "../source/use-program-state.js"
 import useSessionState from "../source/use-session-state.js"
 import useServiceState from "../source/use-service-state.js"
 import useWindowState from "../source/use-window-state.js"
-import useWindowPresentationState from "../source/use-window-presentation-state.js"
 import useSubscribe from "../source/use-subscribe.js"
 
 describe("explicit domain state hooks", function () {
@@ -164,8 +163,6 @@ describe("explicit domain state hooks", function () {
     await waitFor(() => expect(hook.result.current).toEqual({
       title: "Initial",
       header: true,
-      surface: true,
-      transaction: false,
       position: { x: 10, y: 20 },
       size: { width: 640, height: 480 },
       minimized: false,
@@ -187,44 +184,6 @@ describe("explicit domain state hooks", function () {
     expect(hook.result.current?.maximized).toBe(true)
     expect(hook.result.current?.minimized).toBe(true)
     expect(hook.result.current?.position).toEqual({ x: 30, y: 40 })
-  })
-
-  it("keeps Window presentation geometry separate from maximized state", async function () {
-    const events = new Subject()
-    const presentation = presentationFixture(events, "window")
-    const hook = renderHook(() => useWindowPresentationState(presentation))
-
-    await waitFor(() => expect(hook.result.current).toEqual({
-      layer: "window",
-      title: "Initial",
-      header: true,
-      surface: true,
-      position: { x: 10, y: 20 },
-      size: { width: 640, height: 480 },
-      minimized: false,
-      maximized: false,
-      front: true
-    }))
-
-    act(() => events.emit("maximize", true))
-    expect(hook.result.current && "maximized" in hook.result.current && hook.result.current.maximized).toBe(true)
-    expect("position" in hook.result.current! && hook.result.current.position).toEqual({ x: 10, y: 20 })
-  })
-
-  it.each(["under", "shell"] as const)("reads only the presentation values supported by the %s layer", async function (layer) {
-    const events = new Subject()
-    const presentation = presentationFixture(events, layer)
-    const hook = renderHook(() => useWindowPresentationState(presentation))
-
-    await waitFor(() => expect(hook.result.current).toEqual({
-      layer,
-      surface: true,
-      position: { x: 10, y: 20 },
-      size: { width: 640, height: 480 },
-      minimized: false,
-      maximized: false,
-      front: true
-    }))
   })
 
   it("subscribes before the service snapshot and preserves intervening lifecycle events", async function () {
@@ -312,8 +271,6 @@ function windowFixture(events: Subject): Window {
   const reads = {
     title: async () => "Initial",
     header: async () => true,
-    surface: async () => true,
-    transaction: async () => false,
     position: async () => ({ x: 10, y: 20 }),
     size: async () => ({ width: 640, height: 480 }),
     minimized: async () => false,
@@ -331,34 +288,11 @@ function windowFixture(events: Subject): Window {
     maximize: async () => undefined,
     setTitle: async () => undefined,
     setHeader: async () => undefined,
-    setSurface: async () => undefined,
-    setTransaction: async () => undefined,
     raise: async () => undefined,
     wait: async () => { throw new Error("Unexpected wait in state hook") },
     events: async function* () { throw new Error("Unexpected iterator in state hook") },
     subscribe: events.subscribe as Window["subscribe"]
   } satisfies Window
-}
-
-function presentationFixture(events: Subject, layer: "window" | "under" | "shell"): WindowPresentation {
-  return {
-    title: async () => {
-      if (layer !== "window") throw new Error("Unsupported title read")
-      return "Initial"
-    },
-    header: async () => {
-      if (layer !== "window") throw new Error("Unsupported header read")
-      return true
-    },
-    surface: async () => true,
-    position: async () => ({ x: 10, y: 20 }),
-    size: async () => ({ width: 640, height: 480 }),
-    minimized: async () => false,
-    maximized: async () => false,
-    front: async () => true,
-    layer: async () => layer,
-    subscribe: events.subscribe as WindowPresentation["subscribe"]
-  } as WindowPresentation
 }
 
 type Listener = (message: unknown) => unknown
