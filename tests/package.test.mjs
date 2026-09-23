@@ -101,6 +101,7 @@ test("package contract", async () => {
     "useSubscribe",
     "useSubscribeAnswers",
     "useSubscribeAsks",
+    "useWindowPresentationState",
     "useWindowState"
   ]) assert.equal(typeof sdk[name], "function", name)
 
@@ -132,7 +133,8 @@ test("package contract", async () => {
     useSystemAppearance,
     useProcess,
     useProcessState,
-    useServiceState
+    useServiceState,
+    useWindowPresentationState
   } from "@phreshos/react"
   // @ts-expect-error the runtime provider is named ContextProvider
   import { CurrentProvider } from "@phreshos/react"
@@ -144,7 +146,8 @@ test("package contract", async () => {
     const process = useProcess()
     const state = useProcessState(process)
     const service = useServiceState(runtimeService)
-    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{desktop.size.width + scale + Number(state?.exited) + Number(service?.available)}</span>
+    const presentation = useWindowPresentationState(context.presentation)
+    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{presentation?.layer}: {desktop.size.width + scale + Number(state?.exited) + Number(service?.available)}</span>
   }
 
   declare const context: ClientContext
