@@ -55,7 +55,7 @@ describe("runtime providers", function () {
     await waitFor(() => expect(rendered.getByText("800×600:dark:1:true")).toBeTruthy())
     act(() => viewportChanges.emit({ size: { width: 1024, height: 768 } }))
     act(() => preferenceChanges.emit({ theme: "light", animations: false, scale: 1.25 }))
-    expect(rendered.getByText("1024×768:light:1.25:true")).toBeTruthy()
+    await waitFor(() => expect(rendered.getByText("1024×768:light:1.25:true")).toBeTruthy())
 
     rendered.unmount()
     expect(viewportChanges.listenerCount).toBe(0)
