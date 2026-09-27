@@ -101,7 +101,8 @@ test("package contract", async () => {
     "useSubscribe",
     "useSubscribeAnswers",
     "useSubscribeAsks",
-    "useWindowState"
+    "useWindowState",
+    "useClientMemory"
   ]) assert.equal(typeof sdk[name], "function", name)
 
   assert.equal("CurrentProvider" in sdk, false)
@@ -129,6 +130,7 @@ test("package contract", async () => {
     SystemProvider,
     useDesktopPreferences,
     useDesktopViewport,
+    useClientMemory,
     useSystemAppearance,
     useProcess,
     useProcessState,
@@ -146,7 +148,11 @@ test("package contract", async () => {
     const state = useProcessState(process)
     const service = useServiceState(runtimeService)
     const window = useWindowState(context.window)
-    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{window?.layer}: {desktop.size.width + scale + Number(state?.exited) + Number(service?.available)}</span>
+    const [tab, setTab] = useClientMemory("tab", "colors")
+    const [otherTab, setOtherTab] = useClientMemory(context.memory, "tab", "colors")
+    void setTab("layout")
+    void setOtherTab("layout")
+    return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{window?.layer}: {desktop.size.width + scale + Number(state?.exited) + Number(service?.available)} {tab} {otherTab}</span>
   }
 
   declare const context: ClientContext

@@ -32,6 +32,11 @@ export function useContext(): ClientContext {
   return useValue().context
 }
 
+/** Read the current Context when present; explicit-handle hooks also work without it. */
+export function useProvidedContext(): ClientContext | null {
+  return useReactContext(CurrentContext)?.context ?? null
+}
+
 /** Returns the current Program once it resolves. */
 export function useProgram<Handle extends Program = Program>(): Handle {
   return useResolved(useValue().program) as Handle
