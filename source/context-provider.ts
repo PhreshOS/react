@@ -37,6 +37,19 @@ export function useProvidedContext(): ClientContext | null {
   return useReactContext(CurrentContext)?.context ?? null
 }
 
+/** Resolve the current Program without requiring a provider for explicit-handle hooks. */
+export function useProvidedProgram(): Program | undefined {
+  const value = useReactContext(CurrentContext)
+  return useSyncExternalStore(
+    value?.program.subscribe ?? noSubscribe,
+    value?.program.snapshot ?? noProgram,
+    value?.program.snapshot ?? noProgram
+  )
+}
+
+function noSubscribe() { return () => undefined }
+function noProgram(): undefined { return undefined }
+
 /** Returns the current Program once it resolves. */
 export function useProgram<Handle extends Program = Program>(): Handle {
   return useResolved(useValue().program) as Handle

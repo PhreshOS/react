@@ -1,8 +1,9 @@
 import { act, render, waitFor } from "@testing-library/react"
-import type { ClientContext, ClientMemory, Process } from "@phreshos/core"
+import type { ClientContext, ClientMemory, Process, Program, ProgramStore } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import ContextProvider, { useProcess } from "../source/context-provider.js"
 import useClientMemory from "../source/use-client-memory.js"
+import useProgramStore from "../source/use-program-store.js"
 
 describe("ContextProvider", function () {
   it("provides one Client Context and resolves its current Process", async function () {
@@ -92,6 +93,67 @@ describe("ContextProvider", function () {
     await act(async () => setTab("layout"))
     expect(rendered.container.textContent).toBe("layout")
     expect(stored).toBe("layout")
+  })
+
+  it("seeds and follows the current Program store without replacing an existing value", async function () {
+    let value: string | undefined = "saved"
+    const listeners = new Set<(value: string | undefined) => unknown>()
+    const store = {
+      async getOrSet(_key: string, initial: string) { if (value === undefined) { value = initial; for (const listener of listeners) listener(value) }; return value },
+      async update(_key: string, updater: (current: string | undefined) => string) {
+        value = updater(value)
+        for (const listener of listeners) listener(value)
+        return value
+      },
+      async set(_key: string, next: string) {
+        value = next
+        for (const listener of listeners) listener(value)
+        return true
+      },
+      subscribe(_key: string, listener: (current: string | undefined) => unknown) {
+        listeners.add(listener)
+        listener(value)
+        return () => { listeners.delete(listener) }
+      }
+    } as ProgramStore
+    let setTab!: (next: string | ((current: string | undefined) => string)) => Promise<void>
+    function Tab() {
+      const [tab, set] = useProgramStore("tab", "colors")
+      setTab = set
+      return <span>{tab ?? "pending"}</span>
+    }
+    const rendered = render(<ContextProvider context={{
+      process: async () => ({}), program: async () => ({ store }) as Program, parent: async () => null
+    } as ClientContext}><Tab /></ContextProvider>)
+    await waitFor(() => expect(rendered.getByText("saved")).toBeTruthy())
+    await act(async () => setTab(current => current === "saved" ? "layout" : "colors"))
+    expect(rendered.container.textContent).toBe("layout")
+    expect(listeners.size).toBe(1)
+  })
+
+  it("uses an explicit Program store without a ContextProvider", async function () {
+    let value: string | undefined
+    const listeners = new Set<(value: string | undefined) => unknown>()
+    const store = {
+      async getOrSet(_key: string, initial: string) { if (value === undefined) { value = initial; for (const listener of listeners) listener(value) }; return value },
+      async update(_key: string, updater: (current: string | undefined) => string) {
+        value = updater(value)
+        for (const listener of listeners) listener(value)
+        return value
+      },
+      async set(_key: string, next: string) { value = next; for (const listener of listeners) listener(value); return true },
+      subscribe(_key: string, listener: (current: string | undefined) => unknown) {
+        listeners.add(listener)
+        listener(value)
+        return () => { listeners.delete(listener) }
+      }
+    } as ProgramStore
+    function Tab() {
+      const [tab] = useProgramStore(store, "tab", "colors")
+      return <span>{tab ?? "pending"}</span>
+    }
+    const rendered = render(<Tab />)
+    await waitFor(() => expect(rendered.getByText("colors")).toBeTruthy())
   })
 })
 
