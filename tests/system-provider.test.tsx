@@ -1,5 +1,5 @@
 import { act, render, waitFor } from "@testing-library/react"
-import { defaultAppearance, type Appearance, type Connection, type Desktop, type DesktopPreferences, type DesktopViewportSnapshot, type System } from "@phreshos/core"
+import { defaultAppearance, type Appearance, type Connection, type Desktop, type DesktopPreferences, type DesktopSize, type DesktopOffset, type System } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import SystemProvider, { useSystem, useSystemAppearance } from "../source/system-provider.js"
 import DesktopProvider, { useDesktop, useDesktopConnection, useDesktopPreferences, useDesktopViewport } from "../source/desktop-provider.js"
@@ -32,13 +32,15 @@ describe("runtime providers", function () {
     expect(rendered.getByText("#000000:true")).toBeTruthy()
   })
 
-  it("provides one Desktop and follows its viewport and preferences", async function () {
-    const viewportChanges = new Subject<DesktopViewportSnapshot>()
+  it("provides one Desktop and follows its viewport's size and offset together, and its preferences", async function () {
+    const sizes = new Subject<DesktopSize>()
+    const offsets = new Subject<DesktopOffset>()
     const preferenceChanges = new Subject<DesktopPreferences>()
     const desktop = {
       viewport: {
-        snapshot: async () => ({ size: { width: 800, height: 600 } }),
-        subscribe: viewportChanges.subscribe
+        size: async () => ({ width: 800, height: 600 }),
+        offset: async () => ({ x: 0, y: 0 }),
+        subscribe: (event: string, listener: (value: DesktopSize & DesktopOffset) => unknown) => event === "resize" ? sizes.subscribe(event, listener as (value: DesktopSize) => unknown) : offsets.subscribe(event, listener as (value: DesktopOffset) => unknown)
       },
       preferences: {
         snapshot: async () => ({ theme: "dark", animations: true, scale: 1 }),
@@ -52,13 +54,16 @@ describe("runtime providers", function () {
       </DesktopProvider>
     )
 
-    await waitFor(() => expect(rendered.getByText("800×600:dark:1:true")).toBeTruthy())
-    act(() => viewportChanges.emit({ size: { width: 1024, height: 768 } }))
+    await waitFor(() => expect(rendered.getByText("800×600@0,0:dark:1:true")).toBeTruthy())
+    // Each event replaces its own value and keeps the other.
+    act(() => sizes.emit({ width: 1024, height: 768 }))
+    act(() => offsets.emit({ x: 1416, y: 0 }))
     act(() => preferenceChanges.emit({ theme: "light", animations: false, scale: 1.25 }))
-    await waitFor(() => expect(rendered.getByText("1024×768:light:1.25:true")).toBeTruthy())
+    await waitFor(() => expect(rendered.getByText("1024×768@1416,0:light:1.25:true")).toBeTruthy())
 
     rendered.unmount()
-    expect(viewportChanges.listenerCount).toBe(0)
+    expect(sizes.listenerCount).toBe(0)
+    expect(offsets.listenerCount).toBe(0)
     expect(preferenceChanges.listenerCount).toBe(0)
   })
 
@@ -71,7 +76,8 @@ describe("runtime providers", function () {
         return connection
       },
       viewport: {
-        snapshot: async () => ({ size: { width: 800, height: 600 } }),
+        size: async () => ({ width: 800, height: 600 }),
+        offset: async () => ({ x: 0, y: 0 }),
         subscribe: () => () => undefined
       },
       preferences: {
@@ -98,9 +104,9 @@ function SystemValue() {
 
 function DesktopValue() {
   const desktop = useDesktop()
-  const { size } = useDesktopViewport()
+  const { size, offset } = useDesktopViewport()
   const preferences = useDesktopPreferences()
-  return <span>{size.width}×{size.height}:{preferences.theme}:{preferences.scale}:{String(Boolean(desktop))}</span>
+  return <span>{size.width}×{size.height}@{offset.x},{offset.y}:{preferences.theme}:{preferences.scale}:{String(Boolean(desktop))}</span>
 }
 
 function DesktopConnection() {

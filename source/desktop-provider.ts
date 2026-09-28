@@ -1,12 +1,12 @@
 import { createContext, createElement, useContext as useReactContext, useMemo, useSyncExternalStore, type ReactNode } from "react"
-import type { Connection, Desktop, DesktopPreferences, DesktopViewportSnapshot } from "@phreshos/core"
+import type { Connection, Desktop, DesktopPreferences, DesktopViewportState } from "@phreshos/core"
 import LiveSnapshot from "./live-snapshot.js"
 import LiveState from "./live-state.js"
 import useProviderResolution from "./provider-resolution.js"
 
 type DesktopValue = Readonly<{
   desktop: Desktop
-  viewport: LiveSnapshot<DesktopViewportSnapshot>
+  viewport: LiveSnapshot<DesktopViewportState>
   preferences: LiveSnapshot<DesktopPreferences>
 }>
 
@@ -16,10 +16,7 @@ const DesktopContext = createContext<DesktopValue | null>(null)
 export default function DesktopProvider({ children, desktop, fallback = null }: DesktopProviderProperties) {
   const value = useMemo<DesktopValue>(() => ({
     desktop,
-    viewport: new LiveSnapshot(
-      () => desktop.viewport.snapshot(),
-      subscriber => desktop.viewport.subscribe("resize", subscriber)
-    ),
+    viewport: viewportState(desktop),
     preferences: new LiveSnapshot(
       () => desktop.preferences.snapshot(),
       subscriber => desktop.preferences.subscribe("change", subscriber)
@@ -37,8 +34,8 @@ export function useDesktop(): Desktop {
   return useValue().desktop
 }
 
-/** Resolves and follows the current Desktop viewport. */
-export function useDesktopViewport(): DesktopViewportSnapshot {
+/** Resolves and follows the current Desktop viewport: its size and its offset together. */
+export function useDesktopViewport(): DesktopViewportState {
   const store = useValue().viewport
   return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
 }
@@ -71,3 +68,23 @@ export type DesktopProviderProperties = Readonly<{
   desktop: Desktop
   fallback?: ReactNode
 }>
+
+/** One state from the viewport's two values: each event replaces its own value and keeps the other. */
+function viewportState(desktop: Desktop) {
+  let latest: Partial<{ -readonly [Key in keyof DesktopViewportState]: DesktopViewportState[Key] }> = {}
+  const complete = () => latest.size && latest.offset ? Object.freeze({ size: latest.size, offset: latest.offset }) : null
+
+  return new LiveSnapshot<DesktopViewportState>(
+    async () => {
+      const [size, offset] = await Promise.all([desktop.viewport.size(), desktop.viewport.offset()])
+      latest = { size, offset }
+      return complete()!
+    },
+    subscriber => {
+      const publish = () => { const state = complete(); if (state) subscriber(state) }
+      const stopResize = desktop.viewport.subscribe("resize", size => { latest = { ...latest, size }; publish() })
+      const stopMove = desktop.viewport.subscribe("move", offset => { latest = { ...latest, offset }; publish() })
+      return () => { stopResize(); stopMove() }
+    }
+  )
+}
