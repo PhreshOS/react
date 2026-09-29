@@ -31,6 +31,7 @@ export { default as useSessionState, type SessionState } from "./use-session-sta
 export { default as useEndpointState, type EndpointState } from "./use-endpoint-state.js"
 export { default as useServiceState, type ServiceState } from "./use-service-state.js"
 export { default as useWindowState } from "./use-window-state.js"
+export { default as usePresentationState } from "./use-presentation-state.js"
 export { default as useClientMemory } from "./use-client-memory.js"
 export { default as useProgramStore } from "./use-program-store.js"
 export {

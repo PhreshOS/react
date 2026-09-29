@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Connection, Endpoint, Process, Program, Service, Session, Subscribable, Window } from "@phreshos/core"
+import type { Cleanup, Connection, Endpoint, Presentation, Process, Program, Service, Session, Subscribable, Window } from "@phreshos/core"
 import useConnectionState from "../source/use-connection-state.js"
 import useEndpointState from "../source/use-endpoint-state.js"
 import useProcessState from "../source/use-process-state.js"
@@ -9,6 +9,7 @@ import useProgramState from "../source/use-program-state.js"
 import useSessionState from "../source/use-session-state.js"
 import useServiceState from "../source/use-service-state.js"
 import useWindowState from "../source/use-window-state.js"
+import usePresentationState from "../source/use-presentation-state.js"
 import useSubscribe from "../source/use-subscribe.js"
 
 describe("explicit domain state hooks", function () {
@@ -186,6 +187,35 @@ describe("explicit domain state hooks", function () {
     expect(hook.result.current?.position).toEqual({ x: 30, y: 40 })
   })
 
+  it("combines presentation reads and follows the drawing as it changes", async function () {
+    const events = new Subject()
+    const presentation = presentationFixture(events)
+    const hook = renderHook(() => usePresentationState(presentation))
+
+    await waitFor(() => expect(hook.result.current).toEqual({
+      layer: "over",
+      position: { x: -720, y: -438 },
+      size: { width: 300, height: 876 },
+      front: true,
+      interactive: true,
+      surface: false
+    }))
+
+    act(() => events.emit("move", { x: -708, y: -438 }))
+    act(() => events.emit("changeSurface", true))
+    act(() => events.emit("changeInteractive", false))
+    act(() => events.emit("front", false))
+
+    expect(hook.result.current).toEqual({
+      layer: "over",
+      position: { x: -708, y: -438 },
+      size: { width: 300, height: 876 },
+      front: false,
+      interactive: false,
+      surface: true
+    })
+  })
+
   it("subscribes before the service snapshot and preserves intervening lifecycle events", async function () {
     const events = new Subject()
     const snapshot = deferred<boolean>()
@@ -266,6 +296,30 @@ type ErrorBoundaryProperties = Readonly<{
   children: ReactNode
   onError: (error: unknown) => void
 }>
+
+function presentationFixture(events: Subject): Presentation {
+  const unused = async () => { throw new Error("Unexpected write in state hook") }
+  return {
+    layer: async () => "over" as const,
+    position: async () => ({ x: -720, y: -438 }),
+    size: async () => ({ width: 300, height: 876 }),
+    front: async () => true,
+    interactive: async () => true,
+    surface: async () => false as const,
+    move: unused,
+    resize: unused,
+    setGeometry: unused,
+    setSurface: unused,
+    setInteractive: unused,
+    raise: unused,
+    beginMoveGesture: () => { throw new Error("Unexpected move gesture in state hook") },
+    transaction: () => { throw new Error("Unexpected transaction in state hook") },
+    transactionAndWait: () => { throw new Error("Unexpected transaction in state hook") },
+    wait: async () => { throw new Error("Unexpected wait in state hook") },
+    events: async function* () { throw new Error("Unexpected iterator in state hook") },
+    subscribe: events.subscribe as Presentation["subscribe"]
+  } satisfies Presentation
+}
 
 function windowFixture(events: Subject): Window {
   const reads = {
