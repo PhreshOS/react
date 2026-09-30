@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { act, render, renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Cleanup, Connection, Endpoint, Presentation, Process, Program, Service, Session, Subscribable, Window } from "@phreshos/core"
+import type { Cleanup, Connection, DesktopPlaneSource, Endpoint, Presentation, Process, Program, Service, Session, Subscribable, Window } from "@phreshos/core"
 import useConnectionState from "../source/use-connection-state.js"
 import useEndpointState from "../source/use-endpoint-state.js"
 import useProcessState from "../source/use-process-state.js"
@@ -10,6 +10,7 @@ import useSessionState from "../source/use-session-state.js"
 import useServiceState from "../source/use-service-state.js"
 import useWindowState from "../source/use-window-state.js"
 import usePresentationState from "../source/use-presentation-state.js"
+import usePlaneState from "../source/use-plane-state.js"
 import useSubscribe from "../source/use-subscribe.js"
 
 describe("explicit domain state hooks", function () {
@@ -217,6 +218,22 @@ describe("explicit domain state hooks", function () {
       interactive: false,
       surface: true
     })
+  })
+
+  it("reads the plane's size and follows it as the Desktop resizes", async function () {
+    const events = new Subject()
+    const plane = {
+      size: async () => ({ width: 7200, height: 4500 }),
+      subscribe: events.subscribe,
+      wait: async () => { throw new Error("Unexpected wait in state hook") },
+      events: () => { throw new Error("Unexpected events in state hook") }
+    } as unknown as DesktopPlaneSource
+    const hook = renderHook(() => usePlaneState(plane))
+
+    await waitFor(() => expect(hook.result.current).toEqual({ size: { width: 7200, height: 4500 } }))
+
+    act(() => events.emit("resize", { width: 5120, height: 3840 }))
+    expect(hook.result.current).toEqual({ size: { width: 5120, height: 3840 } })
   })
 
   it("subscribes before the service snapshot and preserves intervening lifecycle events", async function () {
