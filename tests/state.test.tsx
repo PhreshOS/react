@@ -194,6 +194,7 @@ describe("explicit domain state hooks", function () {
 
     await waitFor(() => expect(hook.result.current).toEqual({
       layer: "over",
+      anchor: "viewport",
       position: { x: -720, y: -438 },
       size: { width: 300, height: 876 },
       front: true,
@@ -205,9 +206,11 @@ describe("explicit domain state hooks", function () {
     act(() => events.emit("changeSurface", true))
     act(() => events.emit("changeInteractive", false))
     act(() => events.emit("front", false))
+    act(() => events.emit("changeAnchor", "plane"))
 
     expect(hook.result.current).toEqual({
       layer: "over",
+      anchor: "plane",
       position: { x: -708, y: -438 },
       size: { width: 300, height: 876 },
       front: false,
@@ -301,6 +304,7 @@ function presentationFixture(events: Subject): Presentation {
   const unused = async () => { throw new Error("Unexpected write in state hook") }
   return {
     layer: async () => "over" as const,
+    anchor: async () => "viewport" as const,
     position: async () => ({ x: -720, y: -438 }),
     size: async () => ({ width: 300, height: 876 }),
     front: async () => true,
@@ -311,6 +315,7 @@ function presentationFixture(events: Subject): Presentation {
     setGeometry: unused,
     setSurface: unused,
     setInteractive: unused,
+    setAnchor: unused,
     raise: unused,
     beginMoveGesture: () => { throw new Error("Unexpected move gesture in state hook") },
     transaction: () => { throw new Error("Unexpected transaction in state hook") },
