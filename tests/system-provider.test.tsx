@@ -1,5 +1,5 @@
 import { act, render, waitFor } from "@testing-library/react"
-import { defaultAppearance, type Appearance, type Connection, type Desktop, type DesktopPreferences, type DesktopSize, type DesktopOffset, type System } from "@phreshos/core"
+import { defaultAppearance, type Appearance, type Connection, type Desktop, type DesktopPreferences, type DesktopSize, type DesktopViewportMove, type System } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import SystemProvider, { useSystem, useSystemAppearance } from "../source/system-provider.js"
 import DesktopProvider, { useDesktop, useDesktopConnection, useDesktopPreferences, useDesktopViewport } from "../source/desktop-provider.js"
@@ -34,13 +34,13 @@ describe("runtime providers", function () {
 
   it("provides one Desktop and follows its viewport's size and offset together, and its preferences", async function () {
     const sizes = new Subject<DesktopSize>()
-    const offsets = new Subject<DesktopOffset>()
+    const offsets = new Subject<DesktopViewportMove>()
     const preferenceChanges = new Subject<DesktopPreferences>()
     const desktop = {
       viewport: {
         size: async () => ({ width: 800, height: 600 }),
         offset: async () => ({ x: 0, y: 0 }),
-        subscribe: (event: string, listener: (value: DesktopSize & DesktopOffset) => unknown) => event === "resize" ? sizes.subscribe(event, listener as (value: DesktopSize) => unknown) : offsets.subscribe(event, listener as (value: DesktopOffset) => unknown)
+        subscribe: (event: string, listener: (value: never) => unknown) => event === "resize" ? sizes.subscribe(event, listener as (value: DesktopSize) => unknown) : offsets.subscribe(event, listener as (value: DesktopViewportMove) => unknown)
       },
       preferences: {
         snapshot: async () => ({ theme: "dark", animations: true, scale: 1 }),
@@ -57,7 +57,7 @@ describe("runtime providers", function () {
     await waitFor(() => expect(rendered.getByText("800×600@0,0:dark:1:true")).toBeTruthy())
     // Each event replaces its own value and keeps the other.
     act(() => sizes.emit({ width: 1024, height: 768 }))
-    act(() => offsets.emit({ x: 1416, y: 0 }))
+    act(() => offsets.emit({ offset: { x: 1416, y: 0 }, transaction: null }))
     act(() => preferenceChanges.emit({ theme: "light", animations: false, scale: 1.25 }))
     await waitFor(() => expect(rendered.getByText("1024×768@1416,0:light:1.25:true")).toBeTruthy())
 

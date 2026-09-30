@@ -83,7 +83,7 @@ function viewportState(desktop: Desktop) {
     subscriber => {
       const publish = () => { const state = complete(); if (state) subscriber(state) }
       const stopResize = desktop.viewport.subscribe("resize", size => { latest = { ...latest, size }; publish() })
-      const stopMove = desktop.viewport.subscribe("move", offset => { latest = { ...latest, offset }; publish() })
+      const stopMove = desktop.viewport.subscribe("move", move => { latest = { ...latest, offset: move.offset }; publish() })
       return () => { stopResize(); stopMove() }
     }
   )
