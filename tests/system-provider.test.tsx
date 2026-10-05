@@ -2,7 +2,7 @@ import { act, render, waitFor } from "@testing-library/react"
 import { defaultAppearance, type Appearance, type Connection, type Desktop, type DesktopPreferences, type DesktopSize, type DesktopViewportMove, type System } from "@phreshos/core"
 import { describe, expect, it } from "vitest"
 import SystemProvider, { useSystem, useSystemAppearance } from "../source/system-provider.js"
-import DesktopProvider, { useDesktop, useDesktopConnection, useDesktopPreferences, useDesktopViewport } from "../source/desktop-provider.js"
+import DesktopProvider, { useDesktop, useDesktopConnection, useDesktopPlane, useDesktopPreferences, useDesktopViewport } from "../source/desktop-provider.js"
 
 describe("runtime providers", function () {
   it("provides the complete System and follows Appearance", async function () {
@@ -32,8 +32,9 @@ describe("runtime providers", function () {
     expect(rendered.getByText("#000000:true")).toBeTruthy()
   })
 
-  it("provides one Desktop and follows its viewport's size and offset together, and its preferences", async function () {
+  it("provides one Desktop and follows its viewport's size and offset together, its plane, and its preferences", async function () {
     const sizes = new Subject<DesktopSize>()
+    const planeSizes = new Subject<DesktopSize>()
     const offsets = new Subject<DesktopViewportMove>()
     const preferenceChanges = new Subject<DesktopPreferences>()
     const desktop = {
@@ -41,6 +42,10 @@ describe("runtime providers", function () {
         size: async () => ({ width: 800, height: 600 }),
         offset: async () => ({ x: 0, y: 0 }),
         subscribe: (event: string, listener: (value: never) => unknown) => event === "resize" ? sizes.subscribe(event, listener as (value: DesktopSize) => unknown) : offsets.subscribe(event, listener as (value: DesktopViewportMove) => unknown)
+      },
+      plane: {
+        size: async () => ({ width: 4000, height: 3000 }),
+        subscribe: planeSizes.subscribe
       },
       preferences: {
         snapshot: async () => ({ theme: "dark", animations: true, scale: 1 }),
@@ -54,16 +59,18 @@ describe("runtime providers", function () {
       </DesktopProvider>
     )
 
-    await waitFor(() => expect(rendered.getByText("800×600@0,0:dark:1:true")).toBeTruthy())
+    await waitFor(() => expect(rendered.getByText("800×600@0,0:4000×3000:dark:1:true")).toBeTruthy())
     // Each event replaces its own value and keeps the other.
     act(() => sizes.emit({ width: 1024, height: 768 }))
     act(() => offsets.emit({ offset: { x: 1416, y: 0 }, transaction: null }))
+    act(() => planeSizes.emit({ width: 5120, height: 3840 }))
     act(() => preferenceChanges.emit({ theme: "light", animations: false, scale: 1.25 }))
-    await waitFor(() => expect(rendered.getByText("1024×768@1416,0:light:1.25:true")).toBeTruthy())
+    await waitFor(() => expect(rendered.getByText("1024×768@1416,0:5120×3840:light:1.25:true")).toBeTruthy())
 
     rendered.unmount()
     expect(sizes.listenerCount).toBe(0)
     expect(offsets.listenerCount).toBe(0)
+    expect(planeSizes.listenerCount).toBe(0)
     expect(preferenceChanges.listenerCount).toBe(0)
   })
 
@@ -78,6 +85,10 @@ describe("runtime providers", function () {
       viewport: {
         size: async () => ({ width: 800, height: 600 }),
         offset: async () => ({ x: 0, y: 0 }),
+        subscribe: () => () => undefined
+      },
+      plane: {
+        size: async () => ({ width: 4000, height: 3000 }),
         subscribe: () => () => undefined
       },
       preferences: {
@@ -105,8 +116,9 @@ function SystemValue() {
 function DesktopValue() {
   const desktop = useDesktop()
   const { size, offset } = useDesktopViewport()
+  const plane = useDesktopPlane()
   const preferences = useDesktopPreferences()
-  return <span>{size.width}×{size.height}@{offset.x},{offset.y}:{preferences.theme}:{preferences.scale}:{String(Boolean(desktop))}</span>
+  return <span>{size.width}×{size.height}@{offset.x},{offset.y}:{plane.size.width}×{plane.size.height}:{preferences.theme}:{preferences.scale}:{String(Boolean(desktop))}</span>
 }
 
 function DesktopConnection() {

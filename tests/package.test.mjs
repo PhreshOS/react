@@ -87,6 +87,7 @@ test("package contract", async () => {
     "SystemProvider",
     "useContext",
     "useDesktop",
+    "useDesktopPlane",
     "useDesktopPreferences",
     "useDesktopViewport",
     "useEndpointState",
@@ -106,6 +107,7 @@ test("package contract", async () => {
   ]) assert.equal(typeof sdk[name], "function", name)
 
   assert.equal("CurrentProvider" in sdk, false)
+  assert.equal("usePlaneState" in sdk, false)
   assert.equal("useObserve" in sdk, false)
   assert.equal("useObserveAnswers" in sdk, false)
   assert.equal("useObserveAsks" in sdk, false)

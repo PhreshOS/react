@@ -1,12 +1,18 @@
 import { createContext, createElement, useContext as useReactContext, useMemo, useSyncExternalStore, type ReactNode } from "react"
-import type { Connection, Desktop, DesktopPreferences, DesktopViewportState } from "@phreshos/core"
+import type { Connection, Desktop, DesktopPreferences, DesktopSize, DesktopViewportState } from "@phreshos/core"
 import LiveSnapshot from "./live-snapshot.js"
 import LiveState from "./live-state.js"
 import useProviderResolution from "./provider-resolution.js"
 
+/** The plane of standard Windows one Desktop shows a view of. */
+export type DesktopPlaneState = Readonly<{
+  size: DesktopSize
+}>
+
 type DesktopValue = Readonly<{
   desktop: Desktop
   viewport: LiveSnapshot<DesktopViewportState>
+  plane: LiveSnapshot<DesktopPlaneState>
   preferences: LiveSnapshot<DesktopPreferences>
 }>
 
@@ -17,13 +23,17 @@ export default function DesktopProvider({ children, desktop, fallback = null }: 
   const value = useMemo<DesktopValue>(() => ({
     desktop,
     viewport: viewportState(desktop),
+    plane: new LiveSnapshot(
+      async () => Object.freeze({ size: await desktop.plane.size() }),
+      subscriber => desktop.plane.subscribe("resize", size => subscriber(Object.freeze({ size })))
+    ),
     preferences: new LiveSnapshot(
       () => desktop.preferences.snapshot(),
       subscriber => desktop.preferences.subscribe("change", subscriber)
     )
   }), [desktop])
 
-  const stores = useMemo(() => [value.viewport, value.preferences] as const, [value])
+  const stores = useMemo(() => [value.viewport, value.plane, value.preferences] as const, [value])
   const ready = useProviderResolution(stores)
 
   return ready ? createElement(DesktopContext.Provider, { value }, children) : fallback
@@ -37,6 +47,12 @@ export function useDesktop(): Desktop {
 /** Resolves and follows the current Desktop viewport: its size and its offset together. */
 export function useDesktopViewport(): DesktopViewportState {
   const store = useValue().viewport
+  return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
+}
+
+/** Resolves and follows the plane this Desktop shows a view of: its size, which changes with the Desktop's. */
+export function useDesktopPlane(): DesktopPlaneState {
+  const store = useValue().plane
   return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
 }
 
