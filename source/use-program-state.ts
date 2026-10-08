@@ -25,7 +25,7 @@ export default function useProgramState(program: Program): ProgramState | undefi
       program.subscribe("processCreate", process => reduce(current => addProcess(current, process))),
       program.subscribe("processExit", ({ process }) => reduce(current => removeProcess(current, process))),
       program.subscribe("uninstall", () => reduce(current => current.installed ? { ...current, installed: false } : current)),
-      program.subscribe("pinned", pinned => reduce(current => current.pinned === pinned ? current : { ...current, pinned }))
+      program.subscribe("pin", pinned => reduce(current => current.pinned === pinned ? current : { ...current, pinned }))
     )
   ), [program])
 

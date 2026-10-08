@@ -53,7 +53,7 @@ describe("explicit domain state hooks", function () {
       "subscribe:processCreate",
       "subscribe:processExit",
       "subscribe:uninstall",
-      "subscribe:pinned"
+      "subscribe:pin"
     ])
     expect(order[4]).toBe("read")
 
@@ -62,7 +62,7 @@ describe("explicit domain state hooks", function () {
 
     await waitFor(() => expect(hook.result.current).toEqual({ installed: true, pinned: false, processes: [created] }))
 
-    act(() => events.emit("pinned", true))
+    act(() => events.emit("pin", true))
     expect(hook.result.current?.pinned).toBe(true)
 
     act(() => events.emit("uninstall", { purge: false }))
