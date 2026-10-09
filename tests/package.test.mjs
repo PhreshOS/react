@@ -90,6 +90,7 @@ test("package contract", async () => {
     "useDesktopPlane",
     "useDesktopPreferences",
     "useDesktopViewport",
+    "useResolvedDesktopPreferences",
     "useEndpointState",
     "useSystemAppearance",
     "useSystem",
@@ -132,6 +133,7 @@ test("package contract", async () => {
     SystemProvider,
     useDesktopPreferences,
     useDesktopViewport,
+    useResolvedDesktopPreferences,
     useClientMemory,
     useSystemAppearance,
     useProcess,
@@ -143,7 +145,8 @@ test("package contract", async () => {
   import { CurrentProvider } from "@phreshos/react"
 
   function Content() {
-    const { theme, scale } = useDesktopPreferences()
+    const { theme, scale } = useResolvedDesktopPreferences()
+    const chosen: "light" | "dark" | "browser" = useDesktopPreferences().theme
     const appearance = useSystemAppearance()
     const desktop = useDesktopViewport()
     const process = useProcess()
@@ -154,6 +157,7 @@ test("package contract", async () => {
     const [otherTab, setOtherTab] = useClientMemory(context.memory, "tab", "colors")
     void setTab("layout")
     void setOtherTab("layout")
+    void chosen
     return <span style={{ color: appearance.colors[theme].foreground, padding: appearance.spacing }}>{window?.layer}: {desktop.size.width + scale + Number(state?.exited) + Number(service?.available)} {tab} {otherTab}</span>
   }
 

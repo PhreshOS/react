@@ -21,6 +21,7 @@ export {
   useDesktopViewport,
   useDesktopPlane,
   useDesktopPreferences,
+  useResolvedDesktopPreferences,
   type DesktopPlaneState,
   type DesktopProviderProperties
 } from "./desktop-provider.js"

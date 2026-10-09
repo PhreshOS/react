@@ -1,5 +1,5 @@
 import { createContext, createElement, useContext as useReactContext, useMemo, useSyncExternalStore, type ReactNode } from "react"
-import type { Connection, Desktop, DesktopPreferences, DesktopSize, DesktopViewportState } from "@phreshos/core"
+import type { Connection, Desktop, DesktopPreferences, DesktopSize, DesktopViewportState, ResolvedDesktopPreferences } from "@phreshos/core"
 import LiveSnapshot from "./live-snapshot.js"
 import LiveState from "./live-state.js"
 import useProviderResolution from "./provider-resolution.js"
@@ -14,6 +14,7 @@ type DesktopValue = Readonly<{
   viewport: LiveSnapshot<DesktopViewportState>
   plane: LiveSnapshot<DesktopPlaneState>
   preferences: LiveSnapshot<DesktopPreferences>
+  resolvedPreferences: LiveSnapshot<ResolvedDesktopPreferences>
 }>
 
 const DesktopContext = createContext<DesktopValue | null>(null)
@@ -30,10 +31,14 @@ export default function DesktopProvider({ children, desktop, fallback = null }: 
     preferences: new LiveSnapshot(
       () => desktop.preferences.snapshot(),
       subscriber => desktop.preferences.subscribe("change", subscriber)
+    ),
+    resolvedPreferences: new LiveSnapshot(
+      () => desktop.preferences.resolve(),
+      subscriber => desktop.preferences.subscribe("changeResolved", subscriber)
     )
   }), [desktop])
 
-  const stores = useMemo(() => [value.viewport, value.plane, value.preferences] as const, [value])
+  const stores = useMemo(() => [value.viewport, value.plane, value.preferences, value.resolvedPreferences] as const, [value])
   const ready = useProviderResolution(stores)
 
   return ready ? createElement(DesktopContext.Provider, { value }, children) : fallback
@@ -56,9 +61,15 @@ export function useDesktopPlane(): DesktopPlaneState {
   return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
 }
 
-/** Resolves and follows the effective Desktop preferences. */
+/** Follows what was chosen for this Desktop, with `"browser"` where its browser is followed. */
 export function useDesktopPreferences(): DesktopPreferences {
   const store = useValue().preferences
+  return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
+}
+
+/** Follows what this Desktop uses now: its theme, animations, and scale. */
+export function useResolvedDesktopPreferences(): ResolvedDesktopPreferences {
+  const store = useValue().resolvedPreferences
   return useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot)
 }
 
