@@ -30,11 +30,12 @@ describe("explicit domain state hooks", function () {
 
   it("subscribes before the Program read and preserves intervening lifecycle events", async function () {
     const events = new Subject()
+    const installedAt = new Date("2026-10-10T00:00:00.000Z")
     const processes = deferred<Process[]>()
     const created = {} as Process
     const order: string[] = []
     const program = {
-      installed: async () => true,
+      installedAt: async () => installedAt,
       pinnedAt: async () => null,
       processes: () => {
         order.push("read")
@@ -60,14 +61,14 @@ describe("explicit domain state hooks", function () {
     act(() => events.emit("processCreate", created))
     processes.resolve([])
 
-    await waitFor(() => expect(hook.result.current).toEqual({ installed: true, pinnedAt: null, processes: [created] }))
+    await waitFor(() => expect(hook.result.current).toEqual({ installedAt, pinnedAt: null, processes: [created] }))
 
     const pinnedAt = new Date("2026-10-11T00:00:00.000Z")
     act(() => events.emit("pin", pinnedAt))
     expect(hook.result.current?.pinnedAt).toEqual(pinnedAt)
 
     act(() => events.emit("uninstall", { purge: false }))
-    expect(hook.result.current?.installed).toBe(false)
+    expect(hook.result.current?.installedAt).toBeNull()
 
     hook.unmount()
     expect(events.listenerCount).toBe(0)
