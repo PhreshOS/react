@@ -5,7 +5,7 @@
     "": {
       "name": "@phreshos/react",
       "devDependencies": {
-        "@phreshos/core": "^0.5.0",
+        "@phreshos/core": "^0.6.0",
         "@testing-library/dom": "^10.4.1",
         "@testing-library/react": "^16.3.0",
         "@types/react": "^19.2.18",
@@ -17,7 +17,7 @@
         "vitest": "^4.1.10",
       },
       "peerDependencies": {
-        "@phreshos/core": "^0.5.0",
+        "@phreshos/core": "^0.6.0",
         "react": "^19.2.0",
       },
     },
@@ -53,7 +53,7 @@
 
     "@oxc-project/types": ["@oxc-project/types@0.144.0", "", {}, "sha512-nuhZIOLuI6TFQ32I/WnUx+SCPY7SdSKwgnFHydAuoS1+Z4BRcaP+RRJmGzl9lw+0OFF7UmaESf7KQRXaNLHypg=="],
 
-    "@phreshos/core": ["@phreshos/core@0.5.0", "", { "dependencies": { "zod": "^4.6.5" } }, "sha512-6yxVreTdmGElP5YgdNrKjYiKeeUAvYW13ZWdqsj3WL3BkmffKdpdn//paK+UJSbbBim70q1P9mlsXKiQooNmNQ=="],
+    "@phreshos/core": ["@phreshos/core@0.6.0", "", { "dependencies": { "zod": "^4.6.5" } }, "sha512-e4G0JbkOs/lebjeXbmCSdM9D0aoofYj12GSdCDW4tTuoLTPG1rq4KN3m3OpL463CG855gBExzyL+8DVCbj/vwg=="],
 
     "@rolldown/binding-android-arm64": ["@rolldown/binding-android-arm64@1.2.4", "", { "os": "android", "cpu": "arm64" }, "sha512-jHC2cnyKz5xU2fhECtFl8OZ83cYNt13GZQD+0uMJ/X3o+ijmd56okHhTUwxVSHPx1IRVIJEZ1/1pPzeLCU6XKA=="],
 
