@@ -198,6 +198,7 @@ describe("explicit domain state hooks", function () {
       position: { x: -720, y: -438 },
       size: { width: 300, height: 876 },
       front: true,
+      focused: true,
       interactive: true,
       surface: false
     }))
@@ -206,6 +207,7 @@ describe("explicit domain state hooks", function () {
     act(() => events.emit("changeSurface", true))
     act(() => events.emit("changeInteractive", false))
     act(() => events.emit("front", false))
+    act(() => events.emit("focus", false))
     act(() => events.emit("changeAnchor", "plane"))
 
     expect(hook.result.current).toEqual({
@@ -214,6 +216,7 @@ describe("explicit domain state hooks", function () {
       position: { x: -708, y: -438 },
       size: { width: 300, height: 876 },
       front: false,
+      focused: false,
       interactive: false,
       surface: true
     })
@@ -308,6 +311,7 @@ function presentationFixture(events: Subject): Presentation {
     position: async () => ({ x: -720, y: -438 }),
     size: async () => ({ width: 300, height: 876 }),
     front: async () => true,
+    focused: async () => true,
     interactive: async () => true,
     surface: async () => false as const,
     move: unused,
