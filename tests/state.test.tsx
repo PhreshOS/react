@@ -35,7 +35,7 @@ describe("explicit domain state hooks", function () {
     const order: string[] = []
     const program = {
       installed: async () => true,
-      pinned: async () => false,
+      pinnedAt: async () => null,
       processes: () => {
         order.push("read")
         return processes.promise
@@ -60,10 +60,11 @@ describe("explicit domain state hooks", function () {
     act(() => events.emit("processCreate", created))
     processes.resolve([])
 
-    await waitFor(() => expect(hook.result.current).toEqual({ installed: true, pinned: false, processes: [created] }))
+    await waitFor(() => expect(hook.result.current).toEqual({ installed: true, pinnedAt: null, processes: [created] }))
 
-    act(() => events.emit("pin", true))
-    expect(hook.result.current?.pinned).toBe(true)
+    const pinnedAt = new Date("2026-10-11T00:00:00.000Z")
+    act(() => events.emit("pin", pinnedAt))
+    expect(hook.result.current?.pinnedAt).toEqual(pinnedAt)
 
     act(() => events.emit("uninstall", { purge: false }))
     expect(hook.result.current?.installed).toBe(false)
